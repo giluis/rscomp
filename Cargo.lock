@@ -19,7 +19,6 @@ dependencies = [
  "proc-macro2",
  "quote",
  "syn",
- "trybuild",
 ]
 
 [[package]]
@@ -99,6 +98,7 @@ version = "0.0.0"
 dependencies = [
  "astnode",
  "regex",
+ "trybuild",
 ]
 
 [[package]]

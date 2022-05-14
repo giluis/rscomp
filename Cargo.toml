@@ -3,12 +3,20 @@ name = "rscomp"
 version = "0.0.0"
 edition = "2021"
 publish = false
+autotests = false
 
 [workspace]
 
 [[bin]]
 name = "rscomp"
 path = "main.rs"
+
+[[test]]
+name = "tests"
+path = "tests/progress.rs"
+
+[dev-dependencies]
+trybuild = { version = "1.0.49", features = ["diff"] }
 
 [dependencies]
 astnode = { path = "astnode" }
