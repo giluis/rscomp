@@ -162,7 +162,7 @@ fn builder_declaration<'a,I>(builder_name:&syn::Ident, fields:I) -> proc_macro2:
 }
 
 
-#[proc_macro_derive(Builder, attributes(builder))]
+#[proc_macro_derive(AstNode, attributes(ast))]
 pub fn derive(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
     let ast = parse_macro_input!(input as DeriveInput);
     let (target_name, builder_name) = get_names(&ast);

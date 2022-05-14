@@ -1,3 +1,5 @@
+mod iter;
+mod token;
 // Write code here.
 //
 // To see what the code looks like after macro expansion:
@@ -17,7 +19,7 @@
         body: Body;
    }
    
-   impl ParseAST for Function {
+   impl Parseable for Function {
        fn parse(iter: &mut TokenIter) -> Result<Function, String> {
             let return_type = iter.parse::<Type>()?;
             let ident = iter.parse::<TIdent>()?;
@@ -250,28 +252,29 @@
  * */
 
 
-use derive_builder::Builder;
+// use derive_builder::Builder;
 
-#[derive(Builder)]
-pub struct Command {
-    executable: String,
-
-    #[builder(each = "arg")]
-    args: Vec<String>,
-
-    #[builder(each = "env")]
-    env: Vec<String>,
-    current_dir: Option<String>,
-}
+// #[derive(Builder)]
+// pub struct Command {
+//     executable: String,
+//
+//     #[builder(each = "arg")]
+//     args: Vec<String>,
+//
+//     #[builder(each = "env")]
+//     env: Vec<String>,
+//     current_dir: Option<String>,
+// }
 
 fn main() {
-    let command = Command::builder()
-        .executable("cargo".to_owned())
-        .arg("build".to_owned())
-        .arg("--release".to_owned())
-        .build()
-        .unwrap();
-
-    assert_eq!(command.executable, "cargo");
-    // assert_eq!(command.args, vec!["build", "--release"]);
+    // let command = Command::builder()
+    //     .executable("cargo".to_owned())
+    //     .arg("build".to_owned())
+    //     .arg("--release".to_owned())
+    //     .build()
+    //     .unwrap();
+    //
+    // assert_eq!(command.executable, "cargo");
+    // // assert_eq!(command.args, vec!["build", "--release"]);
+    println!("Inside main");
 }

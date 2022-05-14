@@ -11,4 +11,5 @@ name = "rscomp"
 path = "main.rs"
 
 [dependencies]
-derive_builder = { path = "builder" }
+astnode = { path = "astnode" }
+regex = "1.5"
