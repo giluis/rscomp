@@ -19,10 +19,10 @@
    
    impl ParseAST for Function {
        fn parse(iter: &mut TokenIter) -> Result<Function, String> {
-            let return_type = iter.get::<Type>()?;
-            let ident = iter.get::<TIdent>()?;
-            let args = iter.get::<Args>()?;
-            let body = iter.get::<Body>()?;
+            let return_type = iter.parse::<Type>()?;
+            let ident = iter.parse::<TIdent>()?;
+            let args = iter.parse::<Args>()?;
+            let body = iter.parse::<Body>()?;
 
             return Ok(Function{
                 return_type,
@@ -47,9 +47,10 @@
 
    impl ParseAST for Body {
        fn parse(iter: &mut TokenIter) -> Result<Body, String> {
-            let statements = iter.parse_collection::<Statement>()
+            let statements = iter.collection::<Statement>()
                                                 .delimiter(Token::LeftCurly, Token::RightCurly)
-                                                .separator(Token::SemiColon)?;
+                                                .separator(Token::SemiColon)
+                                                .parse()?;
             return Ok(Body{
                 statements
             })
@@ -135,19 +136,20 @@
 
    pub struct Pointer {
         #[ast(minlen = 1)]
-        asterisks: Vec<t!( * )>;
+        pointers: Vec<t!( * )>;
 
-        #[ast(count = asterisks)]
-        count: u8;
+        #[ast(count = pointers)]
+        pointer_dimension: u8;
    }
 
    impl ParseAST for Pointer {
        fn parse(iter: &mut TokenIter) -> Result<Pointer, String> {
-            
+            let pointers= iter.collection<t!( * )>()
+                                .min_len(1)
+                                .parse()?,
             return Ok(Pointer {
-                qualifiers : iter.parse_collection_with<t!( * )>(1,true)?,
-                pointer : iter.parse_possibly<Pointer>(),
-                concrete_type : iter.parse<ConcreteType()>?,
+                pointers: pointers,
+                pionter_dimension: pointers.len(),
             })
    }
 
@@ -158,6 +160,22 @@
 
         Const(TKwConst),
    }
+
+   impl ParseAST for Qualifier {
+       fn parse(iter: &mut TokenIter) -> Result<Qualifier, String> {
+           match iter.parse<TKwStatic>() {
+                Ok(tkwstatic) => return Ok(Qualifier::Static(tkwstatic)),
+                Err => ()
+           }
+           match iter.parse<TKwConst>() {
+                Ok(tkwconst) => return Ok(Qualifier::Const(tkwconst)),
+                Err => ()
+           }
+           Err("Expected qualifier here");
+   }
+
+
+
 
 
    #[derive(AstNode)]
@@ -171,17 +189,63 @@
         Short(TKwShort),
    }
 
+   impl ParseAST for ConcreteType {
+       fn parse(iter: &mut TokenIter) -> Result<ConcreteType, String> {
+           match iter.parse<TKwInt>() {
+                Ok(tkwint) => return Ok(ConcreteType::Static(tkwint)),
+                Err => ()
+           };
+           match iter.parse<TKwChar>() {
+                Ok(tkwchar) => return Ok(ConcreteType::Const(tkwchar)),
+                Err => ()
+           };
+           match iter.parse<TKwLong>() {
+                Ok(tkwlong) => return Ok(ConcreteType::Const(tkwlong)),
+                Err => ()
+           };
+           match iter.parse<TkwShort>() {
+                Ok(tkwshort) => return Ok(ConcreteType::Const(tkwshort)),
+                Err => ()
+           };
+           Err("Expected ConcreteType here");
+   }
+
+
    #[derive(AstNode)]
    pub struct FunctionArgs {
         #[ast(del = "()", sep = ",")]
         args: Vec<Arg>
    }
 
+   impl ParseAST for FunctionArgs {
+       fn parse(iter: &mut TokenIter) -> Result<FunctionArgs, String> {
+            let args = iter.collection::<Arg>()
+                                   .delimiter(Token::LeftParen, Token::RightParen)
+                                   .separator(Token::Colon)
+                                   .parse()?;
+            return Ok(FunctionArgs{
+                args
+            })
+       }
+   }
+
+
    #[derive(AstNode)]
    pub struct Arg {
         arg_type: Type;
         arg_identifier: Ident;
    }
+
+   impl ParseAST for Arg {
+       fn parse(iter: &mut TokenIter) -> Result<FunctionArgs, String> {
+            return Ok(FunctionArgs{
+                arg_type: iter.parse<Type>()?,
+                arg_identifier: iter.parse<TIdent>()?,
+
+            })
+       }
+   }
+
   
  * */
 
