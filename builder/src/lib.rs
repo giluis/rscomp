@@ -21,33 +21,6 @@ fn ty_inner_type<'a>(wrapper: &'a str, ty: &'a syn::Type) -> Option<syn::Type>{
     return None;
 }
 
-fn setter_from_field(f: &Field) -> proc_macro2::TokenStream {
-        let (field_name, setter_name, field_type, inner_type) = (&f.field_name,&f.setter_name, &f.field_type, &f.inner_type);
-        let input_type = if f.is_repeatable || f.is_optional { inner_type } else { field_type };
-        let assignment = if f.is_repeatable {
-            quote!{
-                self.#field_name.push(#setter_name);
-            }
-        } else {
-            quote!{
-                self.#field_name = Some(#setter_name);
-            }
-        };
-        quote!{
-            fn #setter_name(&mut self, #setter_name: #input_type) -> &mut Self{
-                #assignment
-                self
-            }
-        }
-}
-
-fn builder_setters<'a,I>(fields:I) -> proc_macro2::TokenStream where I: Iterator<Item = &'a Field> {
-    let setters:Vec<proc_macro2::TokenStream> = fields.map(|f|setter_from_field(f)).collect();
-    quote!{
-        #( #setters )*
-    }
-}
-
 
 fn build_fn<'a,I>(target_name:&syn::Ident, fields:I) -> proc_macro2::TokenStream 
 where I: Iterator<Item = &'a Field> {
@@ -81,19 +54,6 @@ where I: Iterator<Item = &'a Field> {
     }
 }
 
-fn builder_instantiation<'a,I>(builder_name:&syn::Ident, fields:I) -> proc_macro2::TokenStream where I: Iterator<Item = &'a Field> {
-    let  field_instantiation = fields.map(|Field{is_repeatable, field_name,..}|{
-        let assignment = if * is_repeatable {quote!{vec![]}} else {quote!{None}};
-        quote!{#field_name : #assignment}
-    });
-    quote!{
-        pub fn builder()  -> #builder_name {
-            #builder_name {
-                #(#field_instantiation,)*
-            }
-        }
-    }
-}
 
 
 
@@ -211,21 +171,14 @@ pub fn derive(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
         Err(r) => panic!("{}",r)
     };  
 
-    let builder_instantiation = builder_instantiation(&builder_name, fields.iter());
     let builder_fn = build_fn(&target_name, fields.iter());
-    let setters = builder_setters(fields.iter());
     let builder_declaration = builder_declaration(&builder_name, fields.iter());
      quote!{ 
 
          #builder_declaration
 
-        impl #target_name {
-            #builder_instantiation
-
-        }
 
         impl #builder_name {
-            #setters
 
             #builder_fn
         }
