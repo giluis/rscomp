@@ -1,5 +1,5 @@
-mod iter;
-mod token;
+
+
 // Write code here.
 //
 // To see what the code looks like after macro expansion:
@@ -105,7 +105,7 @@ mod token;
    pub struct ReturnStatement {
 
         #[ast(token = t!( return ))]
-        _: Token;
+        _: KReturn;
 
         expression: Expression;
    }
@@ -117,6 +117,24 @@ mod token;
                  iter.parse<Expression>()?,
             })
    }
+
+   #[derive(AstNode)]
+   pub struct KReturn {
+
+        #[ast(from_token = t!( return ))]
+        return_token: String;
+   }
+
+   impl ParseAST for KReturn {
+       fn parse(iter: &mut TokenIter) -> Result<KReturn, String> {
+            return Ok(KReturn {
+                return_token: match iter.parse_token(t!(return))? {
+                    Token::KWReturn(return_token) => return_token,
+                    _ => panic!("Internal consitency error, please report"),
+                }, 
+            })
+   }
+
 
 
    #[derive(AstNode)]
@@ -150,8 +168,8 @@ mod token;
                                 .min_len(1)
                                 .parse()?,
             return Ok(Pointer {
-                pointers: pointers,
                 pionter_dimension: pointers.len(),
+                pointers: pointers,
             })
    }
 

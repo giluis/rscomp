@@ -16,9 +16,11 @@ name = "astnode"
 version = "0.0.0"
 dependencies = [
  "convert_case",
+ "libcomp",
  "proc-macro2",
  "quote",
  "syn",
+ "trybuild",
 ]
 
 [[package]]
@@ -44,6 +46,13 @@ name = "itoa"
 version = "1.0.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1aab8fc367588b89dcee83ab0fd66b72b50b72fa1904d7095045ace2b0c81c35"
+
+[[package]]
+name = "libcomp"
+version = "0.1.0"
+dependencies = [
+ "regex",
+]
 
 [[package]]
 name = "memchr"
@@ -97,8 +106,7 @@ name = "rscomp"
 version = "0.0.0"
 dependencies = [
  "astnode",
- "regex",
- "trybuild",
+ "libcomp",
 ]
 
 [[package]]

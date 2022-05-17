@@ -28,4 +28,8 @@ pub struct Function {
     ident: String,
 }
 
+#[test]
+fn some_test() {
+    assert_eq!(1,2);
+}
 fn main() {}

@@ -2,8 +2,8 @@
 name = "rscomp"
 version = "0.0.0"
 edition = "2021"
+# autotests = false
 publish = false
-autotests = false
 
 [workspace]
 
@@ -11,13 +11,7 @@ autotests = false
 name = "rscomp"
 path = "main.rs"
 
-[[test]]
-name = "tests"
-path = "tests/progress.rs"
-
-[dev-dependencies]
-trybuild = { version = "1.0.49", features = ["diff"] }
-
 [dependencies]
 astnode = { path = "astnode" }
-regex = "1.5"
+libcomp = { path = "libcomp" }
+# regex = "1.5"

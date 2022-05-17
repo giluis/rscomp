@@ -1,4 +1,5 @@
 use syn::{parse_macro_input, DeriveInput};
+use libcomp::token::Token;
 use quote::*;
 
 
