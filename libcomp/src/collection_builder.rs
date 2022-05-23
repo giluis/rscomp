@@ -1,15 +1,12 @@
 use std::marker::PhantomData;
 use crate::parse::Parsable;
-use crate::token::Token;
 use crate::iter::Iter;
-use crate::t; 
 
 
 #[cfg(test)]
 #[path = "collection_builder_test.rs"]
 mod collection_builder_tests;
 
-#[allow(dead_code)]
 pub struct CollectionBuilder<'a, T, L=Always, R=Always, S=Always> where T: Parsable,L: Parsable ,R : Parsable, S : Parsable{
     iter: &'a mut Iter,
     min_len: usize,
@@ -19,13 +16,12 @@ pub struct CollectionBuilder<'a, T, L=Always, R=Always, S=Always> where T: Parsa
 
 pub fn parse_collection<T>(iter: &mut Iter) -> CollectionBuilder<T>
 where T: Parsable{
-    CollectionBuilder::<T>::from_iter(iter)
+    CollectionBuilder::<T>::new(iter)
 }
 
-#[allow(dead_code)]
 impl <'a, T, L, R, S> CollectionBuilder<'a, T, L, R, S> where T: Parsable,L: Parsable ,R : Parsable, S:Parsable{
 
-    pub fn from_iter(iter: &'a mut Iter) -> CollectionBuilder<T,L,R,S> {
+    pub fn new(iter: &'a mut Iter) -> CollectionBuilder<T,L,R,S> {
         Self {
             min_len: 0,
             max_len: usize::MAX, // is this problematic?
@@ -36,7 +32,7 @@ impl <'a, T, L, R, S> CollectionBuilder<'a, T, L, R, S> where T: Parsable,L: Par
 
     pub fn from_other <T1, L1, R1, S1> (&mut self) -> CollectionBuilder<T1,L1, R1, S1> 
         where T1: Parsable,L1: Parsable,R1: Parsable,S1: Parsable {
-            return CollectionBuilder::from_iter(self.iter); 
+            CollectionBuilder::new(self.iter)
     }
 
     pub fn delimiter<L1,R1>(&mut self) -> CollectionBuilder<T,L1,R1,S>
@@ -64,32 +60,23 @@ impl <'a, T, L, R, S> CollectionBuilder<'a, T, L, R, S> where T: Parsable,L: Par
         let r_leftdel = self.iter.parse::<L>();
         let mut results: Vec<T> = vec![];
         loop {
-            println!("\n == new loop iteration");
-            self.iter.push();
-            println!("  current index: {:?}",self.iter.current);
-            println!("  current token: {:?}",self.iter.tokens[self.iter.current]);
-            let collection_element = self.iter.attempt::<T>(); 
-            if collection_element.is_ok() {
-                println!("  elem ok index: {:?}",self.iter.current);
-                println!("  elem ok cur token: {:?}",self.iter.tokens[self.iter.current]);
-                let r_sep = self.iter.peek::<S>();
-                println!("  sep result status: {:?}",r_sep.is_ok());
-                results.push(collection_element.unwrap());
-                if r_sep.is_ok(){
-                    println!("  sep was ok");
-                    let _ = self.iter.parse::<S>();
-                    self.iter.clean_pop();
-                    continue;
-                } else {
-                    println!("  sep was NOT ok");
-                    // self.iter.pop();
+            match self.iter.attempt::<T>() {
+                Ok(col_elem) => match self.iter.attempt::<S>(){
+                    Ok(_) => {
+                        println!("col_elem ok, s ok");
+                        results.push(col_elem);
+                        continue
+                    },
+                    Err(_) => {
+                        results.push(col_elem);
+                        println!("col_elem ok, s NOT ok; break loop");
+                        break;
+                    }                
+                },
+                Err(_) => { 
+                    println!("col_elem NOT ok, s not parsed; break loop");
                     break;
-                }
-            } else if collection_element.is_err() {
-
-                println!("  elem was NOT ok");
-                self.iter.pop();
-                break;
+                },
             }
         }
         let r_rightdel = self.iter.parse::<R>();
@@ -100,7 +87,7 @@ impl <'a, T, L, R, S> CollectionBuilder<'a, T, L, R, S> where T: Parsable,L: Par
             if results.len() < self.min_len {
                 Err(format!("parsed node collection {} did not respect min len ({})",results.len(), self.min_len))
             }else if results.len() > self.max_len {
-                Err(format!("tokens parsed {} did not respect max len ({})",results.len(), self.max_len))
+                Err(format!("parsed node collection {} did not respect max len ({})",results.len(), self.max_len))
             } else {
                 Ok(results)
             }

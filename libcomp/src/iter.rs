@@ -14,7 +14,6 @@ pub struct Iter {
 }
 
 
-#[allow(dead_code)]
 impl Iter {
 
     pub fn new(tokens: Vec<Token>) -> Iter {
@@ -32,8 +31,8 @@ impl Iter {
     }
 
     pub fn expect(&mut self, token:Token) -> Result<Token, String>{
-         let error = format!( "iter has run out of bounds");
-         let result = self.next().ok_or(error)?;
+         let error = "iter has run out of bounds";
+         let result = self.get_next().ok_or(error)?;
          let expected_error = format!(" expected {:?} but got {:?}", result, token);
          if result.is_same_variant(& token) {
              Ok(result)
@@ -65,7 +64,7 @@ impl Iter {
     }
 
     pub fn collection<T>(&mut self) -> CollectionBuilder<T> where T: Parsable {
-        return parse_collection::<T>(self); 
+        parse_collection::<T>(self)
     }
 
     pub fn push(&mut self) {
@@ -90,7 +89,7 @@ impl Iter {
         self.push();
         let result = T::parse(self);
         self.pop();
-        return result;
+        result
     }
 
     pub fn peek_token(&mut self, token:Token) -> Result<Token, String> {
@@ -100,17 +99,17 @@ impl Iter {
          result
     }
 
-    pub fn next(&mut self) -> Option<Token>{
+    pub fn get_next(&mut self) -> Option<Token>{
         let result = self.get();
         self.increment();
-        return result;
+        result
     }
 
     fn get(&self) -> Option<Token> {
         if self.current < self.size {
             return Some(self.tokens[self.current].clone());
         }
-        return None;
+        None
     }
 
 }
