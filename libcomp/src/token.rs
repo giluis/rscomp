@@ -80,7 +80,7 @@ impl Token {
         (token,input.len())
     }
 
-    pub fn is_same_variant(&self, token: Token) -> bool {
+    pub fn is_same_variant(&self, token: &Token) -> bool {
         match *self {
             Token::LiteralString(_) => match token {
                 Token::LiteralString(_) => true,
@@ -117,13 +117,13 @@ impl Token {
             Token::SemiColon(_)| 
             // meta
             Token::INVALID|
-            Token::EMPTY => * self == token,
+            Token::EMPTY => * self == * token,
         }
     }
 
     pub fn parse(&self, iter:&mut Iter) -> Result<Token, String> {
         let t = iter.next().ok_or(format!("No tokens left to parse"))?;
-        if self.is_same_variant(t) {
+        if self.is_same_variant(&t) {
             Ok(t)
         } else {
             Err(format!("Expected token {:?}, but got token {:?}", *self, t))
@@ -131,26 +131,49 @@ impl Token {
     }
 }
 
+pub const COMMA_DEFAULT_STRING:&'static str = ","; 
+pub const SEMICOLON_DEFAULT_STRING:&'static str = ";"; 
+pub const ASSIGN_DEFAULT_STRING:&'static str = "="; 
+pub const PLUS_DEFAULT_STRING:&'static str = "+"; 
+pub const MINUS_DEFAULT_STRING:&'static str = "-"; 
+pub const MULT_DEFAULT_STRING:&'static str = "*"; 
+pub const DIV_DEFAULT_STRING:&'static str = "/"; 
+pub const KINT_DEFAULT_STRING:&'static str = "int"; 
+pub const KRETURN_DEFAULT_STRING:&'static str = "return"; 
+
+pub const RPAREN_DEFAULT_STRING:&'static str = ")"; 
+pub const LPAREN_DEFAULT_STRING:&'static str = "("; 
+pub const RCURLY_DEFAULT_STRING:&'static str = "}"; 
+pub const LCURLY_DEFAULT_STRING:&'static str = "{"; 
+pub const RBRACKET_DEFAULT_STRING:&'static str = "]"; 
+pub const LBRACKET_DEFAULT_STRING:&'static str = "["; 
+
 #[macro_export]
 macro_rules! t {
-    (,) => (Token::Comma(",".to_string())); 
-    (;) => (Token::Comma(";".to_string())); 
-    (=) => (Token::Assign("=".to_string())); 
-    (+) => (Token::Plus("+".to_string())); 
-    (-) => (Token::Minus("-".to_string())); 
-    (*) => (Token::Mult("*".to_string())); 
-    (/) => (Token::Div("/".to_string())); 
-    (int) => (Token::KInt("int".to_string())); 
-    (return) => (Token::KReturn("return".to_string())); 
+    (,) => (Token::Comma(crate::token::COMMA_DEFAULT_STRING.to_string())); 
+    (;) => (Token::SemiColon(crate::token::SEMICOLON_DEFAULT_STRING.to_string())); 
+    (=) => (Token::Assign(crate::token::ASSIGN_DEFAULT_STRING.to_string())); 
+    (+) => (Token::Plus(crate::token::PLUS_DEFAULT_STRING.to_string())); 
+    (-) => (Token::Minus(crate::token::MINUS_DEFAULT_STRING.to_string())); 
+    (*) => (Token::Mult(crate::token::MULT_DEFAULT_STRING.to_string())); 
+    (/) => (Token::Div(crate::token::DIV_DEFAULT_STRING.to_string())); 
+    (int) => (Token::KInt(crate::token::KINT_DEFAULT_STRING.to_string())); 
+    (return) => (Token::KReturn(crate::token::KRETURN_DEFAULT_STRING.to_string())); 
+
     (litstr) => (Token::LiteralString(Default::default()));
     (litint) => (Token::LiteralInt(Default::default())); 
     (ident) => (Token::Identifier(Default::default())); 
-    (r_paren) => (Token::RParen(")".to_string())); 
-    (l_paren) => (Token::LParen("(".to_string())); 
-    (r_curly) => (Token::RCurly("}".to_string())); 
-    (l_curly) => (Token::LCurly("{".to_string())); 
-    (r_bracket) => (Token::RBracket("]".to_string())); 
-    (l_bracket) => (Token::LBracket("[".to_string())); 
+
+    (litstr $value:expr) => (Token::LiteralString($value.to_string()));
+    (litint $value:expr) => (Token::LiteralInt($value)); 
+    (ident $value:expr) => (Token::Identifier($value.to_string())); 
+
+    (r_paren) => (Token::RParen(crate::token::RPAREN_DEFAULT_STRING.to_string())); 
+    (l_paren) => (Token::LParen(crate::token::LPAREN_DEFAULT_STRING.to_string())); 
+    (r_curly) => (Token::RCurly(crate::token::RCURLY_DEFAULT_STRING.to_string())); 
+    (l_curly) => (Token::LCurly(crate::token::LCURLY_DEFAULT_STRING.to_string())); 
+    (r_bracket) => (Token::RBracket(crate::token::RBRACKET_DEFAULT_STRING.to_string())); 
+    (l_bracket) => (Token::LBracket(crate::token::LBRACKET_DEFAULT_STRING.to_string())); 
     (empty) => (Token::EMPTY); 
     (invalid) => (Token::INVALID); 
 }

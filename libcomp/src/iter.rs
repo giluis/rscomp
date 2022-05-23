@@ -1,14 +1,14 @@
 use crate::token::Token;
 use crate::parse::Parsable;
-use crate::collection_builder::{CollectionBuilder, ParsableItem};
+use crate::collection_builder::{CollectionBuilder, parse_collection};
 
 #[cfg(test)]
 #[path = "iter_tests.rs"]
 mod iter_tests;
 
 pub struct Iter {
-    current: usize,
-    tokens: Vec<Token>,
+    pub current: usize,
+    pub tokens: Vec<Token>,
     size: usize,
     stack: Vec<usize>
 }
@@ -17,7 +17,7 @@ pub struct Iter {
 #[allow(dead_code)]
 impl Iter {
 
-    fn new(tokens: Vec<Token>) -> Iter {
+    pub fn new(tokens: Vec<Token>) -> Iter {
         Iter {
             current: 0,
             size: tokens.len(),
@@ -26,40 +26,57 @@ impl Iter {
         }
     }
 
-    fn parse<T>(&mut self, item: ParsableItem<T>) -> Result<ParsableItem<T>,String>
+    pub fn parse<T>(&mut self) -> Result<T,String>
      where T : Parsable {
-         match item  {
-             ParsableItem::Parsable(_) => T::parse(self).and_then(|p| Ok(ParsableItem::Parsable(p))),
-             ParsableItem::Token(t) => t.parse(self).and_then(|t|Ok(ParsableItem::Token(t))),
-         }
+         T::parse(self)
     }
 
-    fn expect(&mut self, token:Token) -> Result<Token, String>{
-         let error = format!( "token {:?} could not be found here ", token);
+    pub fn expect(&mut self, token:Token) -> Result<Token, String>{
+         let error = format!( "iter has run out of bounds");
          let result = self.next().ok_or(error)?;
          let expected_error = format!(" expected {:?} but got {:?}", result, token);
-         if result.is_same_variant(token) {
+         if result.is_same_variant(& token) {
              Ok(result)
          } else {
              Err(expected_error)
          }
     }
 
-    fn increment(&mut self) -> usize {
+    pub fn attempt<T>(&mut self)-> Result<T, String>
+    where T:Parsable{
+        self.push();
+        let result = self.parse::<T>();
+        match result {
+            Ok(_) => { 
+                self.clean_pop();
+                result
+            },
+            Err(_) => {
+                self.pop();
+                result
+            }
+        }
+
+    }
+     
+    pub fn increment(&mut self) -> usize {
         self.current += 1;
         self.current
     }
 
-    fn collection<'a,T>(&'a mut self, ci: ParsableItem<T>) -> CollectionBuilder<'a,T> where T: Parsable {
-        let a: CollectionBuilder<'a,T> =  CollectionBuilder::new(self, ci);
-        return a; 
+    pub fn collection<T>(&mut self) -> CollectionBuilder<T> where T: Parsable {
+        return parse_collection::<T>(self); 
     }
 
-    fn push(&mut self) {
+    pub fn push(&mut self) {
         self.stack.push(self.current);
     }
+    
+    pub fn clean_pop(&mut self){
+        self.stack.pop();
+    }
 
-    fn pop(&mut self) -> Option<usize>{
+    pub fn pop(&mut self) -> Option<usize>{
         match self.stack.pop() {
             Some(c) => { 
                 self.current = c;
@@ -69,14 +86,14 @@ impl Iter {
         }
     }
 
-    fn peek<T>(&mut self, item: ParsableItem<T>) -> Result<T, String> where T: Parsable {
+    pub fn peek<T>(&mut self) -> Result<T, String> where T: Parsable {
         self.push();
         let result = T::parse(self);
         self.pop();
         return result;
     }
 
-    fn peek_token(&mut self, token:Token) -> Result<Token, String> {
+    pub fn peek_token(&mut self, token:Token) -> Result<Token, String> {
          self.push(); 
          let result = self.expect(token);
          self.pop(); 

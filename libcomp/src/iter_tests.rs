@@ -1,21 +1,25 @@
 #[cfg(test)]
 mod iter_tests {
     use super::super::*;
-    use crate::token::{ Token, LiteralIntValue,IdentifierValue, LiteralStringValue };
+    use crate::token::{ Token, KINT_DEFAULT_STRING,ASSIGN_DEFAULT_STRING, LiteralIntValue,IdentifierValue, LiteralStringValue };
     use crate::lexer::lex;
     use crate::t; 
 
+    #[derive(PartialEq, Debug)]
     struct TestStruct {
-        var_type: Token,
-        string: String,
-        equals_sign: Token,
+        var_type: String,
+        var_name: String,
+        equals_sign: String,
         value: u32,
     }
 
     impl Parsable for TestStruct {
         fn parse(iter: &mut Iter) -> Result<TestStruct, String>{
 
-            let var_type = iter.expect(t!( int ))?;
+            let var_type = match iter.expect(t!( int ))? {
+                Token::KInt(int) => int.to_string(),
+                _ =>panic!("Internal error, should be ident_str"), 
+            };
 
             let ident_str = match iter.expect(t!( ident ))? {
                 Token::Identifier(ident_str)=> ident_str,
@@ -27,55 +31,69 @@ mod iter_tests {
                 Token::LiteralInt(value) => value.clone(),
                 _ => panic!("Internal error: should be lit int")
             };
-            Ok(TestStruct { var_type,  string: ident_str, equals_sign: t!( = ), value })
+            Ok(TestStruct { var_type,  var_name: ident_str, equals_sign: "=".to_string(), value })
         }
     }
 
 
     #[test]
     fn peek(){
+        let expected_variable = "variable1";
+        let expected_value = 3;
         let mut iter = Iter::new(vec![
                 t!( int ),
-                Token::Identifier("variable".to_string()),
+                t!( int ),
+                Token::Identifier(expected_variable.to_string()),
                 t!( = ),
-                Token::LiteralInt(3),
+                Token::LiteralInt(expected_value),
                 t!( ; )
 
         ]);
+        // ignore initial value
+        let current_iter = iter.increment();
+
+        let expected_struct = TestStruct {
+            var_type: KINT_DEFAULT_STRING.to_string(),
+            var_name: expected_variable.to_string(),
+            equals_sign: ASSIGN_DEFAULT_STRING.to_string(),
+            value: expected_value,
+        };
         let r_struct:TestStruct = iter.peek().unwrap();
-        assert_eq!(r_struct.var_type, t!( int ));
-        assert_eq!(r_struct.string, "variable".to_string());
-        assert_eq!(r_struct.equals_sign, t!( = ));
-        assert_eq!(r_struct.value, 3);
+        assert_eq!(expected_struct, r_struct);
 
         let r_struct:TestStruct = iter.peek().unwrap();
-        assert_eq!(r_struct.var_type, t!( int ));
-        assert_eq!(r_struct.string, "variable".to_string());
-        assert_eq!(r_struct.equals_sign, t!( = ));
-        assert_eq!(r_struct.value, 3);
+        assert_eq!(expected_struct, r_struct);
 
-        assert_eq!(iter.current, 0);
+        // no change to current pointer
+        assert_eq!(iter.current, current_iter);
 
         iter.increment();
+
+        // fails, since current pointer is not at beginning of struct
         assert!(iter.peek::<TestStruct>().is_err())
     }
 
 
     #[test]
     fn parse(){
+        let expected_var_name = "variable1";
+        let expected_value = 3;
         let mut iter = Iter::new(vec![
                 t!( int ),
-                Token::Identifier("variable".to_string()),
+                Token::Identifier(expected_var_name.to_string()),
                 t!( = ),
-                Token::LiteralInt(3),
+                Token::LiteralInt(expected_value),
                 t!( ; )
 
         ]);
+        let expected_struct = TestStruct {
+            var_type: KINT_DEFAULT_STRING.to_string(),
+            var_name: expected_var_name.to_string(),
+            equals_sign: ASSIGN_DEFAULT_STRING.to_string(),
+            value: expected_value,
+        };
         let r_struct:TestStruct = iter.parse().unwrap();
-        assert_eq!(r_struct.var_type, t!( int ));
-        assert_eq!(r_struct.string, "variable".to_string());
-        assert_eq!(r_struct.equals_sign, t!( = ));
-        assert_eq!(r_struct.value, 3);
+        assert_eq!(r_struct, expected_struct);
     }
 
 
