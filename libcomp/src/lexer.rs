@@ -1,33 +1,32 @@
 use regex::Regex;
-use crate::token::Token;
-use crate::t;
+use crate::token::{ Token,t };
 
 pub fn lex(input:String )-> Result<Vec<Token>,&'static str>{
     let matchers= vec![
         // Punctuation
-        ("^,",t!(,)),
-        (r#"^;"#,t!(;)),
+        ("^,", t!( , )),
+        (r#"^;"#, t!( ; )),
         // Operations
-        (r#"^="#,t!(=)),
-        (r#"^\+"#,t!(+)),
-        (r#"^\-"#,t!(-)),
-        (r#"^\*"#,t!(*)),
-        ("^/",t!(/)),
+        (r#"^="#, t!( = )),
+        (r#"^\+"#, t!( + )),
+        (r#"^\-"#, t!( - )),
+        (r#"^\*"#, t!( * )),
+        ("^/", t!( / )),
         //Key words
-        ("^int",t!(int)),
-        ("^return",t!(return)),
+        ("^int", t!( int )),
+        ("^return", t!( return )),
         // Values
-        // (r#"^"[0-9a-zA-Z,.;]*""#,Token::LiteralString(String::new())),
-        ("^[0-9][0-9]*",t!(litint)),
+        // (r#"^"[0-9a-zA-Z,.;]*""#,Token::LiteralString(String::new()))
+        ("^[0-9][0-9]*", t!( litint )),
         //Identifier
-        ("^[a-zA-Z][0-9a-zA-Z]*",t!(litstr)),
+        ("^[a-zA-Z][0-9a-zA-Z]*", t!( litstr )),
         // Delimeters
-        (r#"^\}"#,t!(r_curly)),
-        (r#"^\{"#,t!(l_curly)),
-        (r#"^\]"#,t!(r_bracket)),
-        (r#"^\["#,t!(l_bracket)),
-        (r#"^\)"#,t!(r_paren)),
-        (r#"^\("#,t!(l_paren)),
+        (r#"^\}"#, t!( r_curly )),
+        (r#"^\{"#, t!( l_curly )),
+        (r#"^\]"#, t!( r_bracket )),
+        (r#"^\["#, t!( l_bracket )),
+        (r#"^\)"#, t!( r_paren )),
+        (r#"^\("#, t!( l_paren )),
     ];
 
     let mut tokens = Vec::new();

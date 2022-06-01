@@ -3,7 +3,7 @@ use crate::parse::Parsable;
 use crate::collection_builder::{CollectionBuilder, parse_collection};
 
 #[cfg(test)]
-#[path = "iter_tests.rs"]
+#[path = "./tests_iter.rs"]
 mod iter_tests;
 
 pub struct Iter {

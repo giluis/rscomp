@@ -112,49 +112,50 @@ impl Token {
     }
 }
 
-pub const COMMA_DEFAULT_STRING:&str = ","; 
-pub const SEMICOLON_DEFAULT_STRING:&str = ";"; 
-pub const ASSIGN_DEFAULT_STRING:&str = "="; 
-pub const PLUS_DEFAULT_STRING:&str = "+"; 
-pub const MINUS_DEFAULT_STRING:&str = "-"; 
-pub const MULT_DEFAULT_STRING:&str = "*"; 
-pub const DIV_DEFAULT_STRING:&str = "/"; 
-pub const KINT_DEFAULT_STRING:&str = "int"; 
-pub const KRETURN_DEFAULT_STRING:&str = "return"; 
-
-pub const RPAREN_DEFAULT_STRING:&str = ")"; 
-pub const LPAREN_DEFAULT_STRING:&str = "("; 
-pub const RCURLY_DEFAULT_STRING:&str = "}"; 
-pub const LCURLY_DEFAULT_STRING:&str = "{"; 
-pub const RBRACKET_DEFAULT_STRING:&str = "]"; 
-pub const LBRACKET_DEFAULT_STRING:&str = "["; 
-
 #[macro_export]
 macro_rules! t {
-    (,) => (crate::token::Token::Comma(crate::token::COMMA_DEFAULT_STRING.to_string())); 
-    (;) => (crate::token::Token::SemiColon(crate::token::SEMICOLON_DEFAULT_STRING.to_string())); 
-    (=) => (crate::token::Token::Assign(crate::token::ASSIGN_DEFAULT_STRING.to_string())); 
-    (+) => (crate::token::Token::Plus(crate::token::PLUS_DEFAULT_STRING.to_string())); 
-    (-) => (crate::token::Token::Minus(crate::token::MINUS_DEFAULT_STRING.to_string())); 
-    (*) => (crate::token::Token::Mult(crate::token::MULT_DEFAULT_STRING.to_string())); 
-    (/) => (crate::token::Token::Div(crate::token::DIV_DEFAULT_STRING.to_string())); 
-    (int) => (crate::token::Token::KInt(crate::token::KINT_DEFAULT_STRING.to_string())); 
-    (return) => (crate::token::Token::KReturn(crate::token::KRETURN_DEFAULT_STRING.to_string())); 
+    (,) => (Token::Comma(",".to_string())); 
+    (, def) => (","); 
+    (;) => (Token::SemiColon(";".to_string())); 
+    (; def) => (";"); 
+    (=) => (Token::Assign("=".to_string())); 
+    (= def) => ("="); 
+    (+) => (Token::Plus("+".to_string())); 
+    (+ def) => ("+"); 
+    (-) => (Token::Minus("-".to_string())); 
+    (- def) => ("-"); 
+    (*) => (Token::Mult("*".to_string())); 
+    (* def) => ("*"); 
+    (/) => (Token::Div("/".to_string())); 
+    (/ def) => ("/"); 
+    (int) => (Token::KInt("int".to_string())); 
+    (int def) => ("int"); 
+    (return) => (Token::KReturn("return".to_string())); 
+    (return def) => ("return"); 
 
-    (litstr) => (crate::token::Token::LiteralString(Default::default()));
-    (litint) => (crate::token::Token::LiteralInt(Default::default())); 
-    (ident) => (crate::token::Token::Identifier(Default::default())); 
+    (litstr) => (Token::LiteralString(Default::default()));
+    (litint) => (Token::LiteralInt(Default::default())); 
+    (ident) => (Token::Identifier(Default::default())); 
 
-    (litstr $value:expr) => (crate::token::Token::LiteralString($value.to_string()));
-    (litint $value:expr) => (crate::token::Token::LiteralInt($value)); 
-    (ident $value:expr) => (crate::token::Token::Identifier($value.to_string())); 
+    (litstr $value:expr) => (Token::LiteralString($value.to_string()));
+    (litint $value:expr) => (Token::LiteralInt($value)); 
+    (ident $value:expr) => (Token::Identifier($value.to_string())); 
 
-    (r_paren) => (crate::token::Token::RParen(crate::token::RPAREN_DEFAULT_STRING.to_string())); 
-    (l_paren) => (crate::token::Token::LParen(crate::token::LPAREN_DEFAULT_STRING.to_string())); 
-    (r_curly) => (crate::token::Token::RCurly(crate::token::RCURLY_DEFAULT_STRING.to_string())); 
-    (l_curly) => (crate::token::Token::LCurly(crate::token::LCURLY_DEFAULT_STRING.to_string())); 
-    (r_bracket) => (crate::token::Token::RBracket(crate::token::RBRACKET_DEFAULT_STRING.to_string())); 
-    (l_bracket) => (crate::token::Token::LBracket(crate::token::LBRACKET_DEFAULT_STRING.to_string())); 
-    (empty) => (crate::token::Token::EMPTY); 
-    (invalid) => (crate::token::Token::INVALID); 
+    (r_paren) => (Token::RParen(")".to_string())); 
+    (r_paren def) => (")"); 
+    (l_paren) => (Token::LParen("(".to_string())); 
+    (l_paren def) => ("("); 
+    (r_curly) => (Token::RCurly("}".to_string())); 
+    (r_curly def) => ("}"); 
+    (l_curly) => (Token::LCurly("{".to_string())); 
+    (l_curly def) => ("{"); 
+    (r_bracket) => (Token::RBracket("]".to_string())); 
+    (r_bracket def) => ("]"); 
+    (l_bracket) => (Token::LBracket("[".to_string())); 
+    (l_bracket def) => ("["); 
+    (empty) => (Token::EMPTY); 
+    (invalid) => (Token::INVALID); 
+
 }
+
+pub use t;

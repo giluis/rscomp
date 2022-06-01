@@ -1,4 +1,4 @@
-use crate::token::{Token,KINT_DEFAULT_STRING};
+use crate::token::Token;
 use crate::iter::Iter;
 use crate::t; 
 use crate::parse::Parsable;
@@ -12,7 +12,7 @@ impl TestStruct {
 
     pub fn from_string(string: &str) -> Self {
         TestStruct {
-            int_type: KINT_DEFAULT_STRING.to_string(),
+            int_type: t!( int def ).to_string(),
             var_name: string.to_string()
         }
     }

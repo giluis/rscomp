@@ -2,7 +2,8 @@
 mod collection_builder_tests {
     use super::super::*;
     use crate::t; 
-    use crate::testcommon::*;
+    use crate::tests_common::*;
+    use crate::token::Token;
 
     #[test]
     fn parse_nodel_nosep(){
@@ -18,7 +19,7 @@ mod collection_builder_tests {
                 t!( ident expected_varname3),
 
         ]);
-        let r = parse_collection::<TestStruct>(&mut iter).parse();
+        let r = iter.collection::<TestStruct>().parse();
         let expected_vec = vec![
             TestStruct::from_string(expected_varname1),
             TestStruct::from_string(expected_varname2),
@@ -51,7 +52,7 @@ mod collection_builder_tests {
 
         ]);
 
-        let r = parse_collection::<TestStruct>(&mut iter)
+        let r = iter.collection::<TestStruct>()
                                     .delimiter::<LParen,RParen>()
                                     .parse();
         let expected_vec = vec![
@@ -85,7 +86,7 @@ mod collection_builder_tests {
                 t!( ident expected_varname3 ),
         ]);
 
-        let r = parse_collection::<TestStruct>(&mut iter)
+        let r = iter.collection::<TestStruct>()
                                 .separator::<Comma>()
                                 .parse();
         let expected_vec = vec![
@@ -120,7 +121,7 @@ mod collection_builder_tests {
                 t!( ident expected_varname3 ),
         ]);
 
-        let r = parse_collection::<TestStruct>(&mut iter)
+        let r = iter.collection::<TestStruct>()
                                 // missing separator
                                 // .separator::<Comma>()
                                 .parse();
@@ -160,7 +161,7 @@ mod collection_builder_tests {
                 t!( r_curly ),
         ]);
 
-        let r = parse_collection::<TestStruct>(&mut iter)
+        let r = iter.collection::<TestStruct>()
                                 .delimiter::<LCurly,RCurly>()
                                 .separator::<Comma>()
                                 .parse();
@@ -199,7 +200,7 @@ mod collection_builder_tests {
                 t!( r_paren ),
         ]);
 
-        let r = parse_collection::<TestStruct>(&mut iter)
+        let r = iter.collection::<TestStruct>()
                                 .delimiter::<LCurly,RCurly>()
                                 .separator::<Comma>()
                                 .parse();
@@ -225,7 +226,7 @@ mod collection_builder_tests {
                 t!( r_bracket ),
         ]);
 
-        let r = parse_collection::<TestStruct>(&mut iter)
+        let r = iter.collection::<TestStruct>()
                                 .delimiter::<LBracket,RBracket>()
                                 .separator::<Comma>()
                                 .min_len(2)
@@ -258,7 +259,7 @@ mod collection_builder_tests {
         ]);
 
         let min_len = 2;
-        let r = parse_collection::<TestStruct>(&mut iter)
+        let r = iter.collection::<TestStruct>()
                                 .delimiter::<LBracket,RBracket>()
                                 .min_len(min_len)
                                 .parse();
@@ -286,7 +287,7 @@ mod collection_builder_tests {
         ]);
 
         let min_len = 4;
-        let r = parse_collection::<TestStruct>(&mut iter)
+        let r = iter.collection::<TestStruct>()
                                 .delimiter::<LBracket,RBracket>()
                                 .separator::<Comma>()
                                 .min_len(min_len)
@@ -318,7 +319,7 @@ mod collection_builder_tests {
                 t!( r_bracket ),
         ]);
 
-        let r = parse_collection::<TestStruct>(&mut iter)
+        let r = iter.collection::<TestStruct>()
                                 .delimiter::<DoubleLBracket,DoubleRBracket>()
                                 .separator::<Comma>()
                                 .min_len(2)
@@ -359,7 +360,7 @@ mod collection_builder_tests {
                 t!( ident expected_varname3 ),
         ]);
 
-        let r = parse_collection::<TestStruct>(&mut iter)
+        let r = iter.collection::<TestStruct>()
                                 .separator::<DoubleComma>()
                                 .min_len(2)
                                 .parse();
@@ -399,8 +400,7 @@ mod collection_builder_tests {
                 t!( int ),
                 t!( ident expected_varname3 ),
         ]);
-        println!("WHat");
-        let r = parse_collection::<TestStruct>(&mut iter)
+        let r = iter.collection::<TestStruct>()
                                 .separator::<AnyNumberOfCommas>()
                                 .min_len(2) //casually testing min len with complex sep
                                 .parse();
@@ -441,8 +441,7 @@ mod collection_builder_tests {
                 t!( r_curly ),
                 t!( r_curly ),
         ]);
-        println!("WHat");
-        let r = parse_collection::<TestStruct>(&mut iter)
+        let r = iter.collection::<TestStruct>()
                                 .delimiter::<DoubleLCurly,DoubleRCurly>()
                                 .separator::<AnyNumberOfCommas>()
                                 .min_len(2) //casually testing min len with complex sep

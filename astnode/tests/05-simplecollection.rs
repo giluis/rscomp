@@ -22,7 +22,7 @@
 use astnode::AstNode;
 
 #[derive(AstNode)]
-pub struct Expression {
+pub struct Function {
     ident: Identifier,
     #[collection(
         del=(LParen, RParen),
@@ -196,5 +196,4 @@ fn main() {
     }
     assert!(currentBefore + 1, iter.current );
 }
-
 

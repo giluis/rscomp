@@ -4,7 +4,7 @@ use crate::iter::Iter;
 
 
 #[cfg(test)]
-#[path = "collection_builder_test.rs"]
+#[path = "tests_colbuilder.rs"]
 mod collection_builder_tests;
 
 pub struct CollectionBuilder<'a, T, L=Always, R=Always, S=Always> where T: Parsable,L: Parsable ,R : Parsable, S : Parsable{
@@ -63,18 +63,15 @@ impl <'a, T, L, R, S> CollectionBuilder<'a, T, L, R, S> where T: Parsable,L: Par
             match self.iter.attempt::<T>() {
                 Ok(col_elem) => match self.iter.attempt::<S>(){
                     Ok(_) => {
-                        println!("col_elem ok, s ok");
                         results.push(col_elem);
                         continue
                     },
                     Err(_) => {
                         results.push(col_elem);
-                        println!("col_elem ok, s NOT ok; break loop");
                         break;
                     }                
                 },
                 Err(_) => { 
-                    println!("col_elem NOT ok, s not parsed; break loop");
                     break;
                 },
             }

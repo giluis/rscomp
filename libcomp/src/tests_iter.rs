@@ -1,7 +1,7 @@
 #[cfg(test)]
 mod iter_tests {
     use super::super::*;
-    use crate::token::{ Token, KINT_DEFAULT_STRING,ASSIGN_DEFAULT_STRING, LiteralIntValue,IdentifierValue, LiteralStringValue };
+    use crate::token::Token;
     use crate::lexer::lex;
     use crate::t; 
 
@@ -53,9 +53,9 @@ mod iter_tests {
         let current_iter = iter.increment();
 
         let expected_struct = TestStruct {
-            var_type: KINT_DEFAULT_STRING.to_string(),
+            var_type: t!( int def ).to_string(),
             var_name: expected_variable.to_string(),
-            equals_sign: ASSIGN_DEFAULT_STRING.to_string(),
+            equals_sign: t!( = def ).to_string(),
             value: expected_value,
         };
         let r_struct:TestStruct = iter.peek().unwrap();
@@ -87,9 +87,9 @@ mod iter_tests {
 
         ]);
         let expected_struct = TestStruct {
-            var_type: KINT_DEFAULT_STRING.to_string(),
+            var_type: t!( int def ).to_string(),
             var_name: expected_var_name.to_string(),
-            equals_sign: ASSIGN_DEFAULT_STRING.to_string(),
+            equals_sign: t!( = def ).to_string(),
             value: expected_value,
         };
         let r_struct:TestStruct = iter.parse().unwrap();
