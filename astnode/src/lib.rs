@@ -69,10 +69,8 @@ fn get_names(ast: &DeriveInput) -> (syn::Ident, syn::Ident) {
 struct Field {
     field_name: syn::Ident,
     field_type: syn::Type,
-    is_optional: bool,
-    is_repeatable: bool, 
-    setter_name: syn::Ident,
-    inner_type: syn::Type
+    optional_type: Option<syn::Type>,
+    repeatable_type: Option<syn::Type>, 
 }
 
 fn error(f: &syn::Field, msg: &'static str)->syn::Error {
@@ -95,12 +93,10 @@ impl Field {
             (ident.clone(), f.ty.clone(), false, false)
         };
         Ok ( Field {
-            field_name: ident.clone(),
-            field_type:f.ty.clone(),
-            is_optional,
-            is_repeatable,
-            setter_name,
-            inner_type: inner_ty
+            field_name: ident,
+            field_type:f.ty,
+            optional_type: optional(f),
+            repeatable_type: repeatable(f),
         } )
     }
 }
@@ -114,31 +110,33 @@ impl Field {
     }
 } */
 
-fn repeatable(f: &syn::Field ) -> Option<syn::Ident> {
-    for attr in f.attrs.iter(){
-        if attr.path.segments.len() == 1 && attr.path.segments[0].ident == "builder" {
-            let next = attr.clone().tokens.into_iter().next();
-            if let Some(proc_macro2::TokenTree::Group(g)) = next{
-                let mut giter = g.stream().into_iter();
-                let _each = giter.next();
-                let _equalsign = giter.next();
-                let arg = match giter.next().unwrap(){
-                    proc_macro2::TokenTree::Literal(l) => l,
-                    tt => panic!("Expected string, found {}", tt),
-                };
-                match syn::Lit::new(arg) {
-                    syn::Lit::Str(s) => {
-                        return Some(syn::Ident::new( &s.value(), s.span() ));
-                    },
-                    lit => panic!("Expected string, found {:?}", lit),
-                };
+// fn repeatable(f: &syn::Field) -> Option<>
 
-            }
-        }
-    };
-    return None;
-}
-
+// fn repeatable(f: &syn::Field ) -> Option<syn::Ident> {
+//     for attr in f.attrs.iter(){
+//         if attr.path.segments.len() == 1 && attr.path.segments[0].ident == "builder" {
+//             let next = attr.clone().tokens.into_iter().next();
+//             if let Some(proc_macro2::TokenTree::Group(g)) = next{
+//                 let mut giter = g.stream().into_iter();
+//                 let _each = giter.next();
+//                 let _equalsign = giter.next();
+//                 let arg = match giter.next().unwrap(){
+//                     proc_macro2::TokenTree::Literal(l) => l,
+//                     tt => panic!("Expected string, found {}", tt),
+//                 };
+//                 match syn::Lit::new(arg) {
+//                     syn::Lit::Str(s) => {
+//                         return Some(syn::Ident::new( &s.value(), s.span() ));
+//                     },
+//                     lit => panic!("Expected string, found {:?}", lit),
+//                 };
+//
+//             }
+//         }
+//     };
+//     return None;
+// }
+//
 fn builder_declaration_field(f: &Field) -> proc_macro2::TokenStream{
         let Field{field_name, inner_type,field_type, is_repeatable, is_optional, ..} = f;
         let assignment = if * is_repeatable {

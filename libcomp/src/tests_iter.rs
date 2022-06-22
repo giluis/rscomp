@@ -14,7 +14,7 @@ mod iter_tests {
     }
 
     impl Parsable for TestStruct {
-        fn parse(iter: &mut Iter) -> Result<TestStruct, String>{
+        fn parse(iter: &mut TokenIter) -> Result<TestStruct, String>{
 
             let var_type = match iter.expect(t!( int ))? {
                 Token::KInt(int) => int.to_string(),
@@ -40,7 +40,7 @@ mod iter_tests {
     fn peek(){
         let expected_variable = "variable1";
         let expected_value = 3;
-        let mut iter = Iter::new(vec![
+        let mut iter = TokenIter::new(vec![
                 t!( int ),
                 t!( int ),
                 Token::Identifier(expected_variable.to_string()),
@@ -78,7 +78,7 @@ mod iter_tests {
     fn parse(){
         let expected_var_name = "variable1";
         let expected_value = 3;
-        let mut iter = Iter::new(vec![
+        let mut iter = TokenIter::new(vec![
                 t!( int ),
                 Token::Identifier(expected_var_name.to_string()),
                 t!( = ),
@@ -100,7 +100,7 @@ mod iter_tests {
 
     #[test]
     fn peek_token(){
-        let mut iter = Iter::new(vec![
+        let mut iter = TokenIter::new(vec![
                 t!( int ),
                 Token::Identifier("variable".to_string()),
                 t!( = ),
@@ -122,7 +122,7 @@ mod iter_tests {
 
     #[test]
     fn test_push_pop(){
-        let mut iter = Iter::new(vec![
+        let mut iter = TokenIter::new(vec![
                 t!( int ),
                 Token::Identifier("variable".to_string()),
                 t!( = ),
@@ -141,7 +141,7 @@ mod iter_tests {
 
     #[test]
     fn test_increment(){
-        let mut iter = Iter::new(lex("int variable = 3;".to_string()).unwrap());
+        let mut iter = TokenIter::new(lex("int variable = 3;".to_string()).unwrap());
 
         iter.increment();
         iter.increment();
@@ -150,7 +150,7 @@ mod iter_tests {
 
     #[test]
     fn test_expect_empty_tokenlist(){
-        let mut iter = Iter::new(lex("".to_string()).unwrap());
+        let mut iter = TokenIter::new(lex("".to_string()).unwrap());
 
 
         let result = iter.expect(t!(l_paren));
@@ -160,7 +160,7 @@ mod iter_tests {
 
     #[test]
     fn test_expect(){
-        let mut iter = Iter::new(lex("(1,2,3,4,5)".to_string()).unwrap());
+        let mut iter = TokenIter::new(lex("(1,2,3,4,5)".to_string()).unwrap());
 
 
         let lparen_r = iter.expect(t!(l_paren));
@@ -179,7 +179,7 @@ mod iter_tests {
 
     #[test]
     fn test_new(){
-        let iter = Iter::new(lex("(1,2,3,4,5)".to_string()).unwrap());
+        let iter = TokenIter::new(lex("(1,2,3,4,5)".to_string()).unwrap());
         assert_eq!(iter.current, 0);
         assert_eq!(iter.tokens.len(),11);
         assert_eq!(iter.size, 11);
@@ -188,7 +188,7 @@ mod iter_tests {
 
     #[test]
     fn test_new_empty(){
-        let iter = Iter::new(vec![]);
+        let iter = TokenIter::new(vec![]);
         assert_eq!(iter.current, 0);
         assert_eq!(iter.tokens.len(),0);
         assert_eq!(iter.size,0);

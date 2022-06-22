@@ -15,7 +15,7 @@ use libcomp::iter::Iter;
 
 #[derive(AstNode)]
 pub struct Identifier {
-    #[ast( from = Token::Identifier )]
+    #[token(Identifier)]
     ident: String,
 }
 

@@ -1,12 +1,13 @@
 use crate::token::Token;
 use crate::parse::Parsable;
 use crate::collection_builder::{CollectionBuilder, parse_collection};
+use std::cmp::PartialEq;
 
 #[cfg(test)]
 #[path = "./tests_iter.rs"]
 mod iter_tests;
 
-pub struct Iter {
+pub struct TokenIter {
     pub current: usize,
     pub tokens: Vec<Token>,
     size: usize,
@@ -14,10 +15,10 @@ pub struct Iter {
 }
 
 
-impl Iter {
+impl TokenIter {
 
-    pub fn new(tokens: Vec<Token>) -> Iter {
-        Iter {
+    pub fn new(tokens: Vec<Token>) -> TokenIter {
+        TokenIter {
             current: 0,
             size: tokens.len(),
             tokens,
@@ -63,7 +64,7 @@ impl Iter {
         self.current
     }
 
-    pub fn collection<T>(&mut self) -> CollectionBuilder<T> where T: Parsable {
+    pub fn collection<T>(&mut self) -> CollectionBuilder<T> where T: Parsable + PartialEq + std::fmt::Debug {
         parse_collection::<T>(self)
     }
 

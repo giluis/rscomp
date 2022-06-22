@@ -1,5 +1,5 @@
-use crate::iter::Iter;
+use crate::iter::TokenIter;
 
 pub trait Parsable {
-    fn parse(iter: &mut Iter) -> Result <Self, String> where Self: Sized;
+    fn parse(iter: &mut TokenIter) -> Result <Self, String> where Self: Sized;
 }
