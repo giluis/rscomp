@@ -1,6 +1,7 @@
 use regex::Regex;
 use crate::token::{ Token,t };
 
+
 pub fn lex(input:String )-> Result<Vec<Token>,&'static str>{
     let matchers= vec![
         // Punctuation
@@ -31,6 +32,8 @@ pub fn lex(input:String )-> Result<Vec<Token>,&'static str>{
 
     let mut tokens = Vec::new();
     let mut i = 0;
+
+
     while i < input.len(){
         if input.chars().nth(i).unwrap() == ' '{
             i+=1;
@@ -63,3 +66,12 @@ pub fn lex(input:String )-> Result<Vec<Token>,&'static str>{
 }
 
 
+/*
+ * function(arg1) {
+ *      let a = 2;
+ *      let b = a + 2;
+ *      return b + 2; 
+ * }
+ *
+ *
+ * */

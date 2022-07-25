@@ -1,6 +1,24 @@
+#![allow(dead_code)]
+#![allow(unused_imports)]
+
 use syn::{parse_macro_input, DeriveInput};
 use libcomp::token::Token;
 use quote::*;
+
+
+trait UnzippableToVec<T,P> {
+    fn unzip_to_vec(self) -> (Vec<T>,Vec<P>);
+}
+
+impl <T,P,I> UnzippableToVec<T,P> for I where
+I: Iterator<Item = (T,P)>
+{
+    fn unzip_to_vec(self) -> (Vec<T>,Vec<P>) {
+        let a: (Vec<_>,Vec<_>) = self.unzip();
+        return a;
+    }
+
+}
 
 
 fn ty_inner_type<'a>(wrapper: &'a str, ty: &'a syn::Type) -> Option<syn::Type>{
@@ -22,55 +40,101 @@ fn ty_inner_type<'a>(wrapper: &'a str, ty: &'a syn::Type) -> Option<syn::Type>{
     return None;
 }
 
-
-fn build_fn<'a,I>(target_name:&syn::Ident, fields:I) -> proc_macro2::TokenStream 
-where I: Iterator<Item = &'a Field> {
-    let mut field_names:Vec<&syn::Ident> = vec![];
-    let mut match_statements = vec![];
-    for f in fields {
-        let field_name = &f.field_name;
-        field_names.push (field_name);
-        let namestr = field_name.to_string();
-        let missing_error = format!("field {} is missing",namestr);
-        match_statements.push(
-            if f.is_optional || f.is_repeatable {
-                quote!{
-                    let #field_name = self.#field_name.clone();
-                }
-            } else {
-                quote!{
-                    let #field_name = self.#field_name.take().ok_or_else(|| #missing_error.to_string())?;
-                }
-            }
-        )
+fn parse_fn(node_name: syn::Ident, fields:Vec<Field>) -> proc_macro2::TokenStream 
+{
+    let (field_construction, field_name) = if fields.len() == 0 {
+        (vec![],vec![])
+    } else {
+        fields.iter()
+              .map(|f| (f.to_parse_field(), f.field_name.clone()))
+              .unzip_to_vec()
     };
-
     quote!{
-        pub fn build(&mut self) -> Result<#target_name, String> {
-            #(#match_statements)*
-            Ok(#target_name {
-                #(#field_names),*
+        fn parse(iter: &mut TokenIter) -> Result<#node_name,String> {
+            #(#field_construction);*
+            Ok(#node_name {
+                #(#field_name),*
             })
         }
     }
+
 }
 
 
 
 
-fn get_names(ast: &DeriveInput) -> (syn::Ident, syn::Ident) {
-    let name = &ast.ident;
-    let mut namestr = name.to_string();
-    namestr.push_str("Builder");
-    (name.clone(), syn::Ident::new(&namestr,name.span()))
+
+#[derive(Debug)]
+enum FieldQualifier {
+    Optional(syn::Type),//inner option type
+    Repeatable(syn::Type),// inner vec type
+    Node(syn::Type), // f.field_type
+    Leaf{
+        from_token: syn::Path, // Token::Variant
+        value_ty: syn::Type // whatever is inside the Token Variant
+    }, // get the token
 }
 
+impl FieldQualifier {
+    fn from_field(_f: &syn::Field) -> Self {
+             // Self::Node(f.ty.clone())
+        match syn::parse::<syn::Path>(quote!{Token::Identifier}.into()) {
+                Ok(from_token) => match syn::parse::<syn::Type>(quote!{String}.into()) { 
+                    Ok(value_ty) => Self::Leaf{from_token,value_ty},
+                    _=> panic!("Could not parse value_ty")
+                },
+                _=> panic!("Could not parse value_ty")
+        }
+        
+        // if let Some(ty) = extract_repeatable(f) {
+        //      Self::Repeatable(ty)
+        // } else if let Some(ty) = extract_optional(f) {
+        //      Self::Optional(ty)
+        // } else if let Some((from_token, value_ty)) = extract_leaf(f) {
+        //      Self::Leaf {from_token, value_ty}
+        // } else {
 
+    }
+}
+
+fn extract_repeatable(f: &syn::Field) -> Option<syn::Type> {
+    ty_inner_type("Vec",&f.ty)
+}
+
+fn extract_optional(f: &syn::Field) -> Option<syn::Type> {
+    ty_inner_type("Option",&f.ty)
+}
+
+fn extract_leaf(f: &syn::Field) -> Option<(syn::Path, syn::Type)> {
+    for attr in f.attrs.iter(){
+        if attr.path.segments.len() == 1 && attr.path.segments[0].ident == "token" {
+            let next = attr.clone().tokens.into_iter().next();
+            if let Some(proc_macro2::TokenTree::Group(_g)) = next{
+                // let mut giter = g.stream().into_iter();
+                // let _each = giter.next();
+                // let _equalsign = giter.next();
+                // let arg = match giter.next().unwrap(){
+                //     proc_macro2::TokenTree::Literal(l) => l,
+                //     tt => panic!("Expected string, found {}", tt),
+                // };
+                // match syn::Lit::new(arg) {
+                //     syn::Lit::Str(s) => {
+                //         return Some(syn::Ident::new( &s.value(), s.span() ));
+                //     },
+                //     lit => panic!("Expected string, found {:?}", lit),
+                // };
+
+            }
+        }
+    };
+    return None;
+}
+
+#[derive(Debug)]
 struct Field {
     field_name: syn::Ident,
     field_type: syn::Type,
-    optional_type: Option<syn::Type>,
-    repeatable_type: Option<syn::Type>, 
+    qualifier: FieldQualifier
 }
 
 fn error(f: &syn::Field, msg: &'static str)->syn::Error {
@@ -83,34 +147,32 @@ impl Field {
             Some(i) => i.clone(),
             None => unimplemented!("Fields with no identifiers have not been implemented yet"),
         };
-        let ( setter_name, inner_ty, is_optional, is_repeatable ) =  if let Some(setter_name) = repeatable(f){
-            let inner_ty = ty_inner_type("Vec", &f.ty).ok_or(error(f,"A repeatable type must always exist inside of a vector"))?;
-            ( setter_name , inner_ty,  false, true)
-        } else  if is_field_optional(f) {
-            let inner_ty = ty_inner_type("Option", &f.ty).ok_or(error(f,"A type must always exist inside of a option"))?;
-            (ident.clone(), inner_ty, true, false) 
-        } else {
-            (ident.clone(), f.ty.clone(), false, false)
-        };
+
         Ok ( Field {
             field_name: ident,
-            field_type:f.ty,
-            optional_type: optional(f),
-            repeatable_type: repeatable(f),
+            field_type: f.ty.clone(),
+            qualifier: FieldQualifier::from_field(f)
         } )
+    }
+
+    fn to_parse_field(&self) -> proc_macro2::TokenStream {
+        let field_name = &self.field_name;
+        match &self.qualifier {
+            FieldQualifier::Leaf {from_token, ..} => {
+                quote!{
+                    let #field_name =  match iter.get_next() {
+                        Some(#from_token(#field_name)) => #field_name,
+                        None => return Err(format!("No more tokens")),
+                        _ => return Err(format!("Expected a diffefent token")),
+                     };
+                }
+            },
+            _ => quote!{}/* unimplemented!("Not yet implemented all qualifiers") */
+        }
+
     }
 }
 
-
-/* impl syn::parse::Parse for BuilderEachAttrName {
-    fn parse(tokens: syn::parse::ParseStream) -> Result<BuilderEachAttrName, syn::Error>{
-
-        let a: proc_macro::Group = tokens.parse()?;
-
-    }
-} */
-
-// fn repeatable(f: &syn::Field) -> Option<>
 
 // fn repeatable(f: &syn::Field ) -> Option<syn::Ident> {
 //     for attr in f.attrs.iter(){
@@ -137,49 +199,21 @@ impl Field {
 //     return None;
 // }
 //
-fn builder_declaration_field(f: &Field) -> proc_macro2::TokenStream{
-        let Field{field_name, inner_type,field_type, is_repeatable, is_optional, ..} = f;
-        let assignment = if * is_repeatable {
-            quote!{Vec<#inner_type>}
-        } else if * is_optional {
-            quote!{Option<#inner_type>}
-        } else {
-            quote!{Option<#field_type>}
-        };
-        quote!{
-            #field_name: #assignment
-        }
-}
-
-fn builder_declaration<'a,I>(builder_name:&syn::Ident, fields:I) -> proc_macro2::TokenStream where I: Iterator<Item = &'a Field> {
-    let field_declarations: Vec<proc_macro2::TokenStream> = fields.map(|f|builder_declaration_field(f)).collect();
-    quote!{
-        pub struct #builder_name {
-            #(#field_declarations),*
-        }
-    }
-}
 
 
-#[proc_macro_derive(AstNode, attributes(ast))]
+#[proc_macro_derive(AstNode, attributes(token))]
 pub fn derive(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
     let ast = parse_macro_input!(input as DeriveInput);
-    let (target_name, builder_name) = get_names(&ast);
+    let node_name = &ast.ident;
     let fields = match get_fields(&ast){
         Ok(f) => f,
-        Err(r) => panic!("{}",r)
+        Err(_) => unimplemented!("Not sure what to do here")
     };  
 
-    let builder_fn = build_fn(&target_name, fields.iter());
-    let builder_declaration = builder_declaration(&builder_name, fields.iter());
-     quote!{ 
-
-         #builder_declaration
-
-
-        impl #builder_name {
-
-            #builder_fn
+    let parsefn = parse_fn(node_name.clone(), fields); 
+    quote!{ 
+        impl Parsable for #node_name {
+            #parsefn
         }
 
     }.into()
@@ -194,7 +228,7 @@ fn get_fields<'a>(ast: &DeriveInput) -> Result<Vec<Field>, syn::Error> {
                 }),
                 ..
             }) => fields,
-            _ => panic!()
+            _ => unimplemented!("What to do when fields are not named")
         };
     raw_fields.iter().map(|f|Field::new(f)).collect()
 }

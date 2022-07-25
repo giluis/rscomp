@@ -8,6 +8,24 @@
 
 use astnode::AstNode;
 
+// 
+//  file.lang
+//   
+//  def funcao(arg1: int, arg2:str): str {
+//      return ...
+//  }
+//
+//  lexer
+// 
+// 
+// 
+// 
+// 
+// 
+// 
+// 
+// 
+// 
 
 #[derive(AstNode)]
 pub enum Type {

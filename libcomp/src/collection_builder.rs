@@ -1,15 +1,18 @@
+#![allow(dead_code)]
+#![allow(unused_variables)]
+
 use std::marker::PhantomData;
-use std::iter::{zip, Zip};
+use std::iter::Zip;
 use std::slice::Iter;
 use crate::parse::Parsable;
 use crate::iter::TokenIter;
 use std::cmp::PartialEq;
 
 
-
 #[cfg(test)]
 #[path = "tests_colbuilder.rs"]
 mod collection_builder_tests;
+
 
 pub struct Collection<T, L=(), R=(), S=()> 
 where T: Parsable + PartialEq + std::fmt::Debug,
