@@ -1,3 +1,28 @@
+use astnode::AstNode;
+use libcomp::token::{Token, t};
+use libcomp::iter::TokenIter;
+use libcomp::parse::Parsable;
+
+
+#[derive(AstNode, Debug)]
+pub struct Ident {
+    #[leaf(Token::Identifier)]
+    ident:String,
+
+    #[leaf(Token::Identifier)]
+    another:String,
+}
+
+
+fn main() {
+    let mut iter = TokenIter::new(vec![
+          t!( ident "some_ident" ),
+          t!( ident "another" )
+    ]);
+    let a = Ident::parse(&mut iter);
+    println!("{:?}", a);
+    println!("Inside main");
+}
 
 
 // Write code here.
@@ -284,15 +309,3 @@
 //     current_dir: Option<String>,
 // }
 
-fn main() {
-    // let command = Command::builder()
-    //     .executable("cargo".to_owned())
-    //     .arg("build".to_owned())
-    //     .arg("--release".to_owned())
-    //     .build()
-    //     .unwrap();
-    //
-    // assert_eq!(command.executable, "cargo");
-    // // assert_eq!(command.args, vec!["build", "--release"]);
-    println!("Inside main");
-}
