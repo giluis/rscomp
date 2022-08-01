@@ -14,6 +14,15 @@ pub struct TokenIter {
     stack: Vec<usize>
 }
 
+pub trait IntoTokenIter {
+    fn into_token_iter(self) -> TokenIter;
+}
+
+impl IntoTokenIter for Vec<Token> {
+    fn into_token_iter(self) -> TokenIter {
+        TokenIter::new(self)
+    }
+}
 
 impl TokenIter {
 

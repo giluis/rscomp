@@ -1,37 +1,67 @@
-use astnode::AstNode;
+use astnode::{AstNode};
 use libcomp::token::{Token, t};
 use libcomp::iter::TokenIter;
 use libcomp::parse::Parsable;
 
+#[derive(AstNode, PartialEq)]
+pub struct AssignStatement {
+    ty: Type,
+
+    #[leaf( Token::Identifier )]
+    ident: String,
+
+    #[leaf( Token::Assign )]
+    equals_sign: String,
+
+
+    #[leaf( Token::LiteralInt )]
+    value: u32
+
+}
+
+#[derive(AstNode, PartialEq)]
+pub struct Type {
+    #[leaf(Token::KInt)]
+    int: String,
+}
+
+
+
+// impl Parsable for Type  {
+//    fn parse(iter:&mut Iter) -> Result<Type, String> {
+//      let int = match iter.expect(Token::KInt) ? {
+//          Token::KInt(int) => int,
+//          _ => panic!("Internal error: Ok result for iter.expect should always yield token of the same kind as input "),
+//      }
+//
+//      Ok(Type {
+//          int
+//      })
+//    }
+// }
+
+fn main() {
+    let mut iter = TokenIter::new(vec![
+        t!( int ),
+        t!( ident "var1" ),
+        t!( = ),
+        t!( litint 5 )
+    ]);
+
+    let result = iter.parse::<AssignStatement>();
+    let expected = AssignStatement::new(Type::new("int".to_string()),"var1".to_string(), "=".to_string(), 5);
+    
+    assert!(result == Ok(expected));
+}
 
 #[derive(AstNode, Debug)]
-pub struct Ident {
+pub struct Identifier {
     #[leaf(Token::Identifier)]
     ident:String,
 
     #[leaf(Token::Identifier)]
     another:String,
 }
-
-
-fn main() {
-    let mut iter = TokenIter::new(vec![
-          t!( ident "some_ident" ),
-          t!( ident "another" )
-    ]);
-    let a = Ident::parse(&mut iter);
-    println!("{:?}", a);
-    println!("Inside main");
-}
-
-
-// Write code here.
-//
-// To see what the code looks like after macro expansion:
-//     $ cargo expand
-//
-// To run the code:
-//     $ cargo run
 
 
 /*

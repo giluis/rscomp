@@ -10,7 +10,7 @@ pub struct Field {
 
 #[derive(Debug)]
 pub enum FieldCategory {
-    Node,
+    NodeRef,
     Leaf {
         source: syn::Path
     }
@@ -21,7 +21,7 @@ impl From<&syn::Field> for FieldCategory {
         match Self::extract_leaf_source(f) {
             Some(Ok(source)) => Self::Leaf {source},
             Some(Err(_)) => panic!("Leaf source could not be parsed"),
-            None => Self::Node
+            None => Self::NodeRef
         }
     }
 }
@@ -67,7 +67,16 @@ impl Field {
                      };
                 }
             },
-            _ => unimplemented!{"Node category has not been implemented"}
+            FieldCategory::NodeRef => {
+                match &self.ty {
+                    FieldType::Bare(ty) => {
+                        quote!{
+                            let #field_ident = iter.parse::<#ty>()? ;
+                        }
+                    },
+                    _ => unimplemented!("Optional and Repeatables have not been implemented yet")
+                }
+            }
         }
 
     }
@@ -123,7 +132,7 @@ fn extract_leaf(f: &syn::Field) -> Option<(syn::Path, syn::Type)> {
 }
 
     // pub fn from_field(_f: &syn::Field) -> Self {
-    //          // Self::Node(f.ty.clone())
+    //          // Self::NodeRef(f.ty.clone())
     //     match syn::parse::<syn::Path>(quote!{Token::Identifier}.into()) {
     //             Ok(from_token) => match syn::parse::<syn::Type>(quote!{String}.into()) { 
     //                 Ok(value_ty) => Self::Leaf{from_token,value_ty},

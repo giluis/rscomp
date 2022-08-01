@@ -6,6 +6,7 @@ use libcomp::token::Token;
 use quote::*;
 mod field;
 mod util;
+mod node;
 use field::{Field, FieldType};
 
 use util::{ty_inner_type, UnzippableToVec};
@@ -44,7 +45,7 @@ fn newfn(node_name: &syn::Ident, fields: &Vec<Field>) -> proc_macro2::TokenStrea
         },quote!{#fident})
     }).unzip_to_vec();
     quote!{
-        fn new(#(#args),*) {
+        fn new(#(#args),*) -> Self {
             #node_name {
                #(#instantiation_fields),*
             }

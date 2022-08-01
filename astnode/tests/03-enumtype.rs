@@ -1,31 +1,4 @@
-// Resources:
-// 
-//   - The Quote crate for putting together output from a macro:
-//     https://github.com/dtolnay/quote
-//
-//   - Joining together the type name + "Builder" to make the builder's name:
-//     https://docs.rs/syn/1.0/syn/struct.Ident.html
-
 use astnode::AstNode;
-
-// 
-//  file.lang
-//   
-//  def funcao(arg1: int, arg2:str): str {
-//      return ...
-//  }
-//
-//  lexer
-// 
-// 
-// 
-// 
-// 
-// 
-// 
-// 
-// 
-// 
 
 #[derive(AstNode)]
 pub enum Type {

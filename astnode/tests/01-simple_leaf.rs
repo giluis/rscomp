@@ -54,12 +54,12 @@ fn main() {
     assert!(result.unwrap().ident == "some_ident".to_string());
 
     let mut iter = TokenIter::new(vec![
-        t!( ident "int" )
-        t!( ident "arg1" )
+        t!( ident "int" ),
+        t!( ident "arg1" ),
         t!( , )
     ]);
     let result = Arg::parse(&mut iter);
-    let expected = Arg::new()
+    let expected = Arg::new("int".to_string(), "arg1".to_string(), ",".to_string());
     
-    assert!(result.unwrap().ident == "some_ident".to_string());
+    assert!(result == Ok(expected));
 }

@@ -7,17 +7,24 @@
 //     https://docs.rs/syn/1.0/syn/struct.Ident.html
 
 use astnode::AstNode;
+use libcomp::token::{ Token, t};
+use libcomp::iter::{TokenIter, IntoTokenIter};
+use libcomp::parse::Parsable;
 
 
-#[derive(AstNode)]
+#[derive(AstNode, PartialEq)]
 pub struct AssignStatement {
     ty: Type,
 
-    #[token( Identifier )]
+    #[leaf( Token::Identifier )]
     ident: String,
 
-    #[token( Assign )]
+    #[leaf( Token::Assign )]
     equals_sign: String,
+
+
+    #[leaf( Token::LiteralInt )]
+    value: u32
 
     // omitted expression (fearing recursion)
 }
@@ -45,9 +52,9 @@ pub struct AssignStatement {
 //    }
 // }
 
-#[derive(AstNode)]
+#[derive(AstNode, PartialEq)]
 pub struct Type {
-    #[ast( from = Token::KInt )]
+    #[leaf(Token::KInt)]
     int: String,
 }
 
@@ -65,6 +72,29 @@ pub struct Type {
 //      })
 //    }
 // }
+//
+
 
 fn main() {
+    let result = vec![
+            t!( int ),
+            t!( ident "var1" ),
+            t!( = ),
+            t!( litint 5 )
+    ].into_token_iter()
+     .parse::<AssignStatement>();
+    let expected = AssignStatement::new(Type::new("int".to_string()),"var1".to_string(), "=".to_string(), 5);
+    assert!(Ok(expected) == result);
+
+
+    let result = vec![
+            t!( ident "var1" ),
+            t!( = ),
+            t!( litint 5 )
+    ].into_token_iter()
+     .parse::<AssignStatement>();
+    let expected = AssignStatement::new(Type::new("int".to_string()),"var1".to_string(), "=".to_string(), 5);
+    assert!(Ok(expected) != result);
+
+
 }
