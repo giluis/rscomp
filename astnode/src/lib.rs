@@ -15,16 +15,17 @@ use util::{ty_inner_type, UnzippableToVec};
 #[proc_macro_derive(AstNode, attributes(leaf))]
 pub fn derive(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
     let ast = parse_macro_input!(input as DeriveInput);
-    let node_name = &ast.ident;
+    // dbg!(ast.clone());
+    let ast_node_name = &ast.ident;
     let fields = get_fields(&ast);
-    let newfn = newfn(&node_name, &fields);
-    let parsefn = parse_fn(node_name.clone(), fields); 
+    let newfn = newfn(&ast_node_name, &fields);
+    let parsefn = parse_fn(ast_node_name.clone(), fields); 
     quote!{ 
-        impl Parsable for #node_name {
+        impl Parsable for #ast_node_name {
             #parsefn
         }
 
-        impl #node_name {
+        impl #ast_node_name {
             #newfn
         }
 

@@ -1,15 +1,18 @@
 use astnode::AstNode;
+use libcomp::token::{ Token, t};
+use libcomp::iter::{TokenIter, IntoTokenIter};
+use libcomp::parse::Parsable;
 
 #[derive(AstNode)]
 pub enum Type {
 
-    #[token( Token::KInt )]
+    #[leaf( Token::KInt )]
     KInt(String),
 
-    #[token( Token::String )]
+    #[leaf( Token::String )]
     KFloat(String),
 
-    #[token( Token::KInt )]
+    #[leaf( Token::KInt )]
     KChar(String),
 
 }
@@ -35,8 +38,8 @@ pub enum Type {
 // }
 
 fn main() {
-    let iter = Iter::new(vec![
-        t!( int )
+    let iter = TokenIter::new(vec![
+        t!( int ),
         t!( ident "some_function" )
     ]);
     let currentBefore = iter.current;
@@ -45,5 +48,5 @@ fn main() {
         Type::KInt(_) => (),
         _ => assert!(false)
     }
-    assert!(currentBefore + 1, iter.current );
+    assert!(currentBefore + 1 == iter.current );
 }

@@ -38,6 +38,17 @@ impl FieldCategory {
         }
         None
     }
+
+    fn extract_leaf_source_from_atribute(attr: syn::Attribute) -> Option<syn::Path> {
+            if attr.path.segments.len() == 1 && attr.path.segments[0].ident == "leaf" {
+                let next = attr.clone().tokens.into_iter().next();
+                if let Some(proc_macro2::TokenTree::Group(g)) = next{
+                     return syn::parse(g.stream().into()).ok();
+                }
+            };
+            None
+
+    }
 }
 
 
