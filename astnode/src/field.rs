@@ -1,163 +1,154 @@
-use quote::*;
 use crate::util::ty_inner_type;
+use quote::*;
+use syn::spanned::Spanned;
 
 #[derive(Debug)]
 pub struct Field {
-    pub ident: syn::Ident,
+    pub name: syn::Ident,
     pub ty: FieldType,
-    category: FieldCategory,
+    pub terminality: FieldTerminality,
 }
-
-#[derive(Debug)]
-pub enum FieldCategory {
-    NodeRef,
-    Leaf {
-        source: syn::Path
-    }
-} 
-
-impl From<&syn::Field> for FieldCategory {
-    fn from (f: &syn::Field) -> Self {
-        match Self::extract_leaf_source(f) {
-            Some(Ok(source)) => Self::Leaf {source},
-            Some(Err(_)) => panic!("Leaf source could not be parsed"),
-            None => Self::NodeRef
-        }
-    }
-}
-
-impl FieldCategory {
-    fn extract_leaf_source(f: &syn::Field) -> Option<Result<syn::Path, syn::Error>> {
-        for attr in f.attrs.iter(){
-            if attr.path.segments.len() == 1 && attr.path.segments[0].ident == "leaf" {
-                let next = attr.clone().tokens.into_iter().next();
-                if let Some(proc_macro2::TokenTree::Group(g)) = next{
-                     return Some(syn::parse(g.stream().into()));
-                }
-            }
-        }
-        None
-    }
-
-    fn extract_leaf_source_from_atribute(attr: syn::Attribute) -> Option<syn::Path> {
-            if attr.path.segments.len() == 1 && attr.path.segments[0].ident == "leaf" {
-                let next = attr.clone().tokens.into_iter().next();
-                if let Some(proc_macro2::TokenTree::Group(g)) = next{
-                     return syn::parse(g.stream().into()).ok();
-                }
-            };
-            None
-
-    }
-}
-
-
-
-impl From<&syn::Field> for Field {
-    fn from(f: &syn::Field)->Self{
-        Field {
-            ident: f.ident.clone().unwrap(),
-            ty: (&f.ty).into(),
-            category: f.into(),
-        }
-    }
-}
-
 
 impl Field {
-
     pub fn to_parse_field(&self) -> proc_macro2::TokenStream {
-        let field_ident = &self.ident;
-        match &self.category {
-            FieldCategory::Leaf {source: leaf_source} => {
-                quote!{
+        let field_ident = &self.name;
+        match &self.terminality {
+            FieldTerminality::Leaf {
+                source: leaf_source,
+            } => {
+                quote! {
                     let #field_ident =  match iter.get_next() {
                         Some(#leaf_source(#field_ident)) => #field_ident,
                         None => return Err(format!("No more tokens")),
                         _ => return Err(format!("Expected a diffefent token")),
                      };
                 }
-            },
-            FieldCategory::NodeRef => {
-                match &self.ty {
-                    FieldType::Bare(ty) => {
-                        quote!{
-                            let #field_ident = iter.parse::<#ty>()? ;
-                        }
-                    },
-                    _ => unimplemented!("Optional and Repeatables have not been implemented yet")
-                }
             }
+            FieldTerminality::NodeRef => match &self.ty {
+                FieldType::Bare(ty) => {
+                    quote! {
+                        let #field_ident = iter.parse::<#ty>()? ;
+                    }
+                }
+                _ => unimplemented!("Optional and Repeatables have not been implemented yet"),
+            },
         }
-
     }
 }
 
+impl From<&syn::Field> for Field {
+    fn from(f: &syn::Field) -> Self {
+        Field {
+            name: f.ident.clone().unwrap(),
+            ty: (&f.ty).into(),
+            terminality: f.into(),
+        }
+    }
+}
 
+#[derive(Debug)]
+pub enum FieldTerminality {
+    NodeRef,
+    Leaf { source: syn::TypePath },
+}
 
+fn error<T>(e: T, msg: &str) -> syn::Error
+where
+    T: Spanned,
+{
+    syn::Error::new(e.span(), msg)
+}
+
+trait LeafSourceExtractable {
+    fn extract_leaf_source_from_atribute(self) -> Result<syn::TypePath, syn::Error>;
+}
+
+// impl LeafSourceExtractable for &syn::Attribute {
+//     fn extract_leaf_source_from_atribute(self) -> Result<syn::TypePath, syn::Error> {
+//         let next = self.tokens.into_iter().next();
+//         if let Some(proc_macro2::TokenTree::Group(g)) = next {
+//             syn::parse(g.stream().into())
+//         } else {
+//             Err(error(
+//                 self,
+//                 "Could not extract source from attribute on field",
+//             ))
+//         }
+//     }
+// }
+
+fn extract_leaf_source_from_atribute(attr: &syn::Attribute) -> Result<syn::TypePath, syn::Error> {
+    let next = attr.clone().tokens.into_iter().next();
+    if let Some(proc_macro2::TokenTree::Group(g)) = next {
+        syn::parse(g.stream().into())
+    } else {
+        Err(error(
+            attr,
+            "Could not extract source from attribute on field",
+        ))
+    }
+}
+impl FieldTerminality {
+    fn is_node(f: &syn::Field) -> bool{
+        f.attrs.iter().count() > 0
+    }
+    fn extract_leaf_source(f: &syn::Field) -> Result<syn::TypePath, syn::Error> {
+        f.attrs
+            .iter()
+            .filter(|attr| {
+                attr.path.segments.len() == 1 && attr.path.segments[0].ident == "leaf"
+            })
+            .nth(0)
+            .ok_or(error(f, "Field is not leaf"))
+            .and_then(extract_leaf_source_from_atribute)
+    }
+}
+
+impl From<&syn::Field> for FieldTerminality {
+    fn from(f: &syn::Field) -> Self {
+
+        match Self::extract_leaf_source(f) {
+            _ if FieldTerminality::is_node(f) => panic!("Something"), 
+            Ok(source) => Self::Leaf { source },
+            Err(_) => panic!("could not parse leaf"),
+        }
+    }
+}
 
 #[derive(Debug)]
 pub enum FieldType {
-    Optional(syn::Type),//inner option type
-    Repeatable(syn::Type),// inner vec type
-    Bare(syn::Type)
+    Optional(&'static syn::Type),   //inner option type
+    Repeatable(&'static syn::Type), // inner vec type
+    Bare(&'static syn::Type),
 }
 
 impl From<&syn::Type> for FieldType {
     fn from(ty: &syn::Type) -> Self {
-        FieldType::Bare(ty.clone())
+        match ty.extract_if_optional()
+        .or_else(||ty.extract_if_repeatable()){
+            Some(t) => t,
+            None => FieldType::Bare(&ty.clone())
+        }
     }
 }
 
-fn extract_repeatable(f: &syn::Field) -> Option<syn::Type> {
-    ty_inner_type("Vec",&f.ty)
+trait ModifierExtractable<'a> {
+    fn extract_if_repeatable(self) -> Option<FieldType>;
+
+    fn extract_if_optional(self) -> Option<FieldType>;
 }
 
-fn extract_optional(f: &syn::Field) -> Option<syn::Type> {
-    ty_inner_type("Option",&f.ty)
+impl <'a> ModifierExtractable<'a> for &syn::Type {
+    fn extract_if_repeatable(self) -> Option<FieldType> {
+        ty_inner_type("Vec", self.clone())
+        .and_then(|t|Some(FieldType::Repeatable(t)))
+        .or(None)
+        
+    }
+
+    fn extract_if_optional(self) -> Option<FieldType> {
+        ty_inner_type("Option", self.clone())
+        .and_then(|t|Some(FieldType::Optional(t)))
+        .or(None)
+    }
 }
-
-fn extract_leaf(f: &syn::Field) -> Option<(syn::Path, syn::Type)> {
-    for attr in f.attrs.iter(){
-        if attr.path.segments.len() == 1 && attr.path.segments[0].ident == "token" {
-            let next = attr.clone().tokens.into_iter().next();
-            if let Some(proc_macro2::TokenTree::Group(_g)) = next{
-                // let mut giter = g.stream().into_iter();
-                // let _each = giter.next();
-                // let _equalsign = giter.next();
-                // let arg = match giter.next().unwrap(){
-                //     proc_macro2::TokenTree::Literal(l) => l,
-                //     tt => panic!("Expected string, found {}", tt),
-                // };
-                // match syn::Lit::new(arg) {
-                //     syn::Lit::Str(s) => {
-                //         return Some(syn::Ident::new( &s.value(), s.span() ));
-                //     },
-                //     lit => panic!("Expected string, found {:?}", lit),
-                // };
-
-            }
-        }
-    };
-    return None;
-}
-
-    // pub fn from_field(_f: &syn::Field) -> Self {
-    //          // Self::NodeRef(f.ty.clone())
-    //     match syn::parse::<syn::Path>(quote!{Token::Identifier}.into()) {
-    //             Ok(from_token) => match syn::parse::<syn::Type>(quote!{String}.into()) { 
-    //                 Ok(value_ty) => Self::Leaf{from_token,value_ty},
-    //                 _=> panic!("Could not parse value_ty")
-    //             },
-    //             _=> panic!("Could not parse value_ty")
-    //     }
-    //     
-    //     // if let Some(ty) = extract_repeatable(f) {
-    //     //      Self::Repeatable(ty)
-    //     // } else if let Some(ty) = extract_optional(f) {
-    //     //      Self::Optional(ty)
-    //     // } else if let Some((from_token, value_ty)) = extract_leaf(f) {
-    //     //      Self::Leaf {from_token, value_ty}
-    //     // } else {
-    //
-    // }

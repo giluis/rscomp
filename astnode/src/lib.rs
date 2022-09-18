@@ -13,7 +13,7 @@ use util::{ty_inner_type, UnzippableToVec};
 
 
 #[proc_macro_derive(AstNode, attributes(leaf))]
-pub fn derive(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
+pub fn parse_consumer(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
     let ast = parse_macro_input!(input as DeriveInput);
     // dbg!(ast.clone());
     let ast_node_name = &ast.ident;
@@ -40,7 +40,7 @@ fn newfn(node_name: &syn::Ident, fields: &Vec<Field>) -> proc_macro2::TokenStrea
            FieldType::Repeatable(t) => quote!{Vec<#t>},
            FieldType::Bare(t) => quote!{#t},
         };
-        let fident = &f.ident;
+        let fident = &f.name;
         (quote!{
             #fident: #fty
         },quote!{#fident})
@@ -76,7 +76,7 @@ fn parse_fn(node_name: syn::Ident, fields:Vec<Field>) -> proc_macro2::TokenStrea
         (vec![],vec![])
     } else {
         fields.iter()
-              .map(|f| (f.to_parse_field(), f.ident.clone()))
+              .map(|f| (f.to_parse_field(), f.name.clone()))
               .unzip_to_vec()
     };
     quote!{

@@ -1,5 +1,5 @@
 // Resources:
-// 
+//
 //   - The Quote crate for putting together output from a macro:
 //     https://github.com/dtolnay/quote
 //
@@ -18,14 +18,13 @@
 //         }
 //     }
 
-
 use astnode::AstNode;
 
 #[derive(AstNode)]
 pub struct VarDecaration {
     ty: Type,
 
-    #[token( Token::Identifier )]
+    #[token(Token::Identifier)]
     ident: String,
 }
 
@@ -33,7 +32,7 @@ pub struct VarDecaration {
 //    fn parse(iter:&mut Iter) -> Result<Type, String> {
 //          let ty = iter.parse::<Type>()?;
 //          let ident = iter.expect(Token::Identifier)? {
-//              Token::Identifier(ident) => ident, 
+//              Token::Identifier(ident) => ident,
 //              _ => panic!("Error, internal consistency"),
 //          }
 //          return Ok(VarDeclaration{
@@ -41,29 +40,24 @@ pub struct VarDecaration {
 //              ident
 //          })
 //    }
-// 
+//
 // }
-
-
-
 
 #[derive(AstNode)]
 pub enum Type {
-
-    #[token( Token::KInt )]
+    #[token(Token::KInt)]
     KInt(String),
 
-    #[token( Token::String )]
+    #[token(Token::String)]
     KFloat(String),
 
-    #[token( Token::KInt )]
+    #[token(Token::KInt)]
     KChar(String),
-
 }
 
 // impl Parsable for Type  {
 //    fn parse(iter:&mut Iter) -> Result<Type, String> {
-//      
+//
 //      match iter.expect(Token::KInt)? {
 //          Token::KInt(kint) => return OK(Type::KInt(kint)),
 //          _ => ()
@@ -90,11 +84,11 @@ fn main() {
     let currentBefore = iter.current;
     let result = iter.parse::<VarDeclaration>();
     match result {
-        Ok(VarDeclaration{
+        Ok(VarDeclaration {
             ty: Type::KInt(_),
-            ident: Token::Identifier(ident), 
+            ident: Token::Identifier(ident),
         }) => (),
         _ => assert!(false),
     }
-    assert!(currentBefore + 1, iter.current );
+    assert!(currentBefore + 1, iter.current);
 }

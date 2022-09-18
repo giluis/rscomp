@@ -1,4 +1,4 @@
-pub fn ty_inner_type<'a>(wrapper: &'a str, ty: &'a syn::Type) -> Option<syn::Type>{
+pub fn ty_inner_type<'a>(wrapper: & str, ty: syn::Type) -> Option<&'a syn::Type>{
     if let syn::Type::Path(ref p )  = ty {
         if p.path.segments.len() != 1 || p.path.segments[0].ident != wrapper {
             return None;
@@ -9,8 +9,8 @@ pub fn ty_inner_type<'a>(wrapper: &'a str, ty: &'a syn::Type) -> Option<syn::Typ
             }
 
             let inner_ty = inner_ty.args.first().unwrap();
-            if let syn::GenericArgument::Type(syn::Type::Path(t)) =  inner_ty {
-                return Some(t.clone().into());
+            if let syn::GenericArgument::Type(t) =  inner_ty {
+                return Some(t);
             }
         }
     }
