@@ -1,13 +1,15 @@
 #![allow(dead_code)]
 #![allow(unused_imports)]
 
+mod util;
+mod node;
+
+use node::node::{Node, NodeType};
+use node::descriptor::Descriptor;
 use syn::{parse_macro_input, DeriveInput};
 use libcomp::token::Token;
 use quote::*;
-mod field;
-mod util;
-mod node;
-use field::{Field, FieldType};
+use crate::node::branch::Branch;
 
 use util::{ty_inner_type, UnzippableToVec};
 
@@ -16,31 +18,39 @@ use util::{ty_inner_type, UnzippableToVec};
 pub fn parse_consumer(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
     let ast = parse_macro_input!(input as DeriveInput);
     // dbg!(ast.clone());
-    let ast_node_name = &ast.ident;
-    let fields = get_fields(&ast);
-    let newfn = newfn(&ast_node_name, &fields);
-    let parsefn = parse_fn(ast_node_name.clone(), fields); 
+    let node:Node = ast.into();
+    let newfn = match node.node_type  {
+        NodeType::ProductNode =>  node.to_newfn(),
+        NodeType::SumNode => quote!(),
+    };
+    let parsefn =   node.to_parse_fn();
+
+
+    // println!("{:?}",node);
+    // println!("{}",parsefn);
+    let node_ident = &node.ident;
+    
     quote!{ 
-        impl Parsable for #ast_node_name {
+        impl Parsable for #node_ident {
             #parsefn
         }
 
-        impl #ast_node_name {
+        impl #node_ident {
             #newfn
         }
 
     }.into()
 }
 
-fn newfn(node_name: &syn::Ident, fields: &Vec<Field>) -> proc_macro2::TokenStream {
+fn newfn(node_name: &syn::Ident, fields: &Vec<Branch>) -> proc_macro2::TokenStream {
 
     let (args, instantiation_fields) = fields.iter().map(|f|{
-        let fty = match &f.ty {
-           FieldType::Optional(t) => quote!{Option<#t>},
-           FieldType::Repeatable(t) => quote!{Vec<#t>},
-           FieldType::Bare(t) => quote!{#t},
+        let fty = match &f.desc {
+           Descriptor::Optional(t) => quote!{Option<#t>},
+           Descriptor::Repeatable(t) => quote!{Vec<#t>},
+           Descriptor::Bare(t) => quote!{#t},
         };
-        let fident = &f.name;
+        let fident = &f.ident;
         (quote!{
             #fident: #fty
         },quote!{#fident})
@@ -54,7 +64,7 @@ fn newfn(node_name: &syn::Ident, fields: &Vec<Field>) -> proc_macro2::TokenStrea
     }
 }
 
-fn get_fields<'a>(ast: &DeriveInput) -> Vec<Field>{
+fn get_fields<'a>(ast: &DeriveInput) -> Vec<Branch>{
     let raw_fields = match &ast.data {
             syn::Data::Struct(syn::DataStruct {
                 fields: syn::Fields::Named(syn::FieldsNamed {
@@ -70,24 +80,6 @@ fn get_fields<'a>(ast: &DeriveInput) -> Vec<Field>{
 
 
 
-fn parse_fn(node_name: syn::Ident, fields:Vec<Field>) -> proc_macro2::TokenStream 
-{
-    let (field_assignment_to_parse_result, field_name) = if fields.len() == 0 {
-        (vec![],vec![])
-    } else {
-        fields.iter()
-              .map(|f| (f.to_parse_field(), f.name.clone()))
-              .unzip_to_vec()
-    };
-    quote!{
-        fn parse(iter: &mut TokenIter) -> Result<#node_name,String> {
-            #(#field_assignment_to_parse_result);*
-            Ok(#node_name {
-                #(#field_name),*
-            })
-        }
-    }
-}
 
 
 fn error(f: &syn::Field, msg: &'static str)->syn::Error {

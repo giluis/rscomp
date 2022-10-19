@@ -26,7 +26,7 @@ pub struct Identifier {}
 
 fn main() {
 
-    println!("Compiled");
+    // println!("Compiled");
     let mut _iter = TokenIter::new(vec![
         t!( ident "some_ident" )
     ]);

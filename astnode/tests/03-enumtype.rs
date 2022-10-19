@@ -9,11 +9,11 @@ pub enum Type {
     #[leaf( Token::KInt )]
     KInt(String),
 
-    #[leaf( Token::String )]
-    KFloat(String),
+    // #[leaf( Token::String )]
+    // KFloat(String),
 
-    #[leaf( Token::KInt )]
-    KChar(String),
+    // #[leaf( Token::KInt )]
+    // KChar(String),
 
 }
 

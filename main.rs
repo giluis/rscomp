@@ -4,26 +4,46 @@ use libcomp::iter::TokenIter;
 use libcomp::parse::Parsable;
 
 #[derive(AstNode, PartialEq)]
-pub struct AssignStatement {
-    ty: Type,
 
-    #[leaf( Token::Identifier )]
-    ident: String,
+pub enum Type {
 
-    #[leaf( Token::Assign )]
-    equals_sign: String,
+    #[leaf( Token::KInt )]
+    KInt(String),
 
+    // #[leaf( Token::String )]
+    // KFloat(String),
 
-    #[leaf( Token::LiteralInt )]
-    value: u32
+    // #[leaf( Token::KInt )]
+    // KChar(String),
 
 }
 
-#[derive(AstNode, PartialEq)]
-pub struct Type {
-    #[leaf(Token::KInt)]
-    int: String,
+fn a()-> () {
+     let a:Result<u32,&str>  = Err("sdflkj",);
 }
+impl Type{}
+
+// #[derive(AstNode, PartialEq)]
+// pub struct AssignStatement {
+//     ty: Type,
+
+//     #[leaf( Token::Identifier )]
+//     ident: String,
+
+//     #[leaf( Token::Assign )]
+//     equals_sign: String,
+
+
+//     #[leaf( Token::LiteralInt )]
+//     value: u32
+
+// }
+
+// #[derive(AstNode, PartialEq)]
+// pub struct Type {
+//     #[leaf(Token::KInt)]
+//     int: String,
+// }
 
 
 
@@ -43,25 +63,25 @@ pub struct Type {
 fn main() {
     let mut iter = TokenIter::new(vec![
         t!( int ),
-        t!( ident "var1" ),
-        t!( = ),
-        t!( litint 5 )
+     //    t!( ident "var1" ),
+     //    t!( = ),
+     //    t!( litint 5 )
     ]);
 
-    let result = iter.parse::<AssignStatement>();
-    let expected = AssignStatement::new(Type::new("int".to_string()),"var1".to_string(), "=".to_string(), 5);
+    let result = iter.parse::<Type>();
+    let expected = Type::KInt("int".to_string());
     
     assert!(result == Ok(expected));
 }
 
-#[derive(AstNode, Debug)]
-pub struct Identifier {
-    #[leaf(Token::Identifier)]
-    ident:String,
+// #[derive(AstNode, Debug)]
+// pub struct Identifier {
+//     #[leaf(Token::Identifier)]
+//     ident:String,
 
-    #[leaf(Token::Identifier)]
-    another:String,
-}
+//     #[leaf(Token::Identifier)]
+//     another:String,
+// }
 
 
 /*
