@@ -7,7 +7,7 @@ mod iter_tests {
 
     #[derive(PartialEq, Debug)]
     struct TestStruct {
-        var_type: String,
+        var_type: Token,
         var_name: String,
         equals_sign: String,
         value: u32,
@@ -16,10 +16,7 @@ mod iter_tests {
     impl Parsable for TestStruct {
         fn parse(iter: &mut TokenIter) -> Result<TestStruct, String>{
 
-            let var_type = match iter.expect(t!( int ))? {
-                Token::KInt(int) => int.to_string(),
-                _ =>panic!("Internal error, should be ident_str"), 
-            };
+            let var_type = iter.expect(t!( int ))?;
 
             let ident_str = match iter.expect(t!( ident ))? {
                 Token::Identifier(ident_str)=> ident_str,
@@ -53,7 +50,7 @@ mod iter_tests {
         let current_iter = iter.increment();
 
         let expected_struct = TestStruct {
-            var_type: t!( int def ).to_string(),
+            var_type: t!(int),
             var_name: expected_variable.to_string(),
             equals_sign: t!( = def ).to_string(),
             value: expected_value,
@@ -87,7 +84,7 @@ mod iter_tests {
 
         ]);
         let expected_struct = TestStruct {
-            var_type: t!( int def ).to_string(),
+            var_type: t!( int ),
             var_name: expected_var_name.to_string(),
             equals_sign: t!( = def ).to_string(),
             value: expected_value,

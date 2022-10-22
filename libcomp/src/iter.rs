@@ -4,7 +4,7 @@ use crate::collection_builder::{CollectionBuilder, parse_collection};
 use std::cmp::PartialEq;
 
 #[cfg(test)]
-#[path = "./tests_iter.rs"]
+#[path = "../tests/test1.rs"]
 mod iter_tests;
 
 pub struct TokenIter {

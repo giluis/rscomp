@@ -37,29 +37,29 @@ impl From<String> for IdentifierValue {
 #[derive(Debug,Clone, PartialEq)]
 pub enum Token  {
     // Operations
-    Assign(String),
-    Plus(String),
-    Minus(String),
-    Mult(String),
-    Div(String),
+    Assign,
+    Plus,
+    Minus,
+    Mult,
+    Div,
     // KeyWords and Literals
-    KInt(String),
-    KReturn(String),
+    KInt,
+    KReturn,
     // Literals
     LiteralString(String),
     LiteralInt(u32),
     //Identifier
     Identifier(String),
     // Delimeters
-    RCurly(String),
-    LCurly(String),
-    RBracket(String),
-    LBracket(String),
-    RParen(String),
-    LParen(String),
-    Comma(String),
+    RCurly,
+    LCurly,
+    RBracket,
+    LBracket,
+    RParen,
+    LParen,
+    Comma,
     //Punctuation
-    SemiColon(String),
+    SemiColon,
     // meta
     INVALID,
     EMPTY
@@ -86,25 +86,25 @@ impl Token {
             Token::Identifier(_) =>matches!(token,Token::Identifier(_)),
 
             // Operations
-            Token::Assign(_) |
-            Token::Plus(_) |
-            Token::Minus(_) |
-            Token::Mult(_) |
-            Token::Div(_) |
+            Token::Assign |
+            Token::Plus |
+            Token::Minus |
+            Token::Mult |
+            Token::Div |
             // KeyWords and Literals
-            Token::KInt(_) |
-            Token::KReturn(_) |
+            Token::KInt |
+            Token::KReturn |
             // Literals
             // Delimeters
-            Token::RCurly(_) |
-            Token::LCurly(_) |
-            Token::RBracket(_) |
-            Token::LBracket(_) |
-            Token::RParen(_) |
-            Token::LParen(_) |
-            Token::Comma(_) |
+            Token::RCurly |
+            Token::LCurly |
+            Token::RBracket |
+            Token::LBracket |
+            Token::RParen |
+            Token::LParen |
+            Token::Comma |
             //Punctuation
-            Token::SemiColon(_)| 
+            Token::SemiColon| 
             // meta
             Token::INVALID|
             Token::EMPTY => * self == * token,
@@ -114,23 +114,23 @@ impl Token {
 
 #[macro_export]
 macro_rules! t {
-    (,) => (Token::Comma(",".to_string())); 
+    (,) => (Token::Comma); 
     (, def) => (","); 
-    (;) => (Token::SemiColon(";".to_string())); 
+    (;) => (Token::SemiColon); 
     (; def) => (";"); 
-    (=) => (Token::Assign("=".to_string())); 
+    (=) => (Token::Assign); 
     (= def) => ("="); 
-    (+) => (Token::Plus("+".to_string())); 
+    (+) => (Token::Plus); 
     (+ def) => ("+"); 
-    (-) => (Token::Minus("-".to_string())); 
+    (-) => (Token::Minus); 
     (- def) => ("-"); 
-    (*) => (Token::Mult("*".to_string())); 
+    (*) => (Token::Mult); 
     (* def) => ("*"); 
-    (/) => (Token::Div("/".to_string())); 
+    (/) => (Token::Div); 
     (/ def) => ("/"); 
-    (int) => (Token::KInt("int".to_string())); 
+    (int) => (Token::KInt); 
     (int def) => ("int"); 
-    (return) => (Token::KReturn("return".to_string())); 
+    (return) => (Token::KReturn); 
     (return def) => ("return"); 
 
     (litstr) => (Token::LiteralString(Default::default()));
@@ -141,17 +141,17 @@ macro_rules! t {
     (litint $value:expr) => (Token::LiteralInt($value)); 
     (ident $value:expr) => (Token::Identifier($value.to_string())); 
 
-    (r_paren) => (Token::RParen(")".to_string())); 
+    (r_paren) => (Token::RParen); 
     (r_paren def) => (")"); 
-    (l_paren) => (Token::LParen("(".to_string())); 
+    (l_paren) => (Token::LParen); 
     (l_paren def) => ("("); 
-    (r_curly) => (Token::RCurly("}".to_string())); 
+    (r_curly) => (Token::RCurly); 
     (r_curly def) => ("}"); 
-    (l_curly) => (Token::LCurly("{".to_string())); 
+    (l_curly) => (Token::LCurly); 
     (l_curly def) => ("{"); 
-    (r_bracket) => (Token::RBracket("]".to_string())); 
+    (r_bracket) => (Token::RBracket); 
     (r_bracket def) => ("]"); 
-    (l_bracket) => (Token::LBracket("[".to_string())); 
+    (l_bracket) => (Token::LBracket); 
     (l_bracket def) => ("["); 
     (empty) => (Token::EMPTY); 
     (invalid) => (Token::INVALID); 

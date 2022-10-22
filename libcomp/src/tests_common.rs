@@ -14,7 +14,7 @@ macro_rules! fail {
 
 #[derive(PartialEq, Debug)]
 pub struct TestStruct {
-    pub int_type: String,
+    pub int_type: Token,
     pub var_name: String,
 }
 
@@ -22,7 +22,7 @@ impl TestStruct {
 
     pub fn from_string(string: &str) -> Self {
         TestStruct {
-            int_type: t!( int def ).to_string(),
+            int_type: t!( int),
             var_name: string.to_string()
         }
     }
@@ -31,9 +31,9 @@ impl TestStruct {
 impl Parsable for TestStruct {
     fn parse(iter: &mut TokenIter) -> Result<TestStruct, String>{
 
-        let var_type = match iter.expect(t!( int ))? {
-            Token::KInt(int) => int,
-            _ =>panic!("Internal error, should be \"int\""), 
+        let var_type = match iter.expect(t!( int )){
+            Ok(kint) => kint,
+            Err(msg) => panic!("{}",msg),
         };
 
         let ident_str = match iter.expect(t!( ident ))? {
