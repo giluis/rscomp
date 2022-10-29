@@ -16,50 +16,39 @@ use libcomp::iter::TokenIter;
 use libcomp::parse::Parsable;
 
 #[derive(AstNode, PartialEq)]
-pub struct Identifier {
-    #[leaf(Token::Identifier)]
-    ident: String,
-}
-
-#[derive(AstNode, PartialEq)]
 pub struct Arg {
-    #[leaf(Token::Identifier)]
+    #[stateful_leaf(Token::Identifier)]
     ident: String,
 
-    #[leaf(Token::Identifier)]
-    ty: String,
-    
-    #[leaf(Token::Comma)]
-    comma: String,
+    #[stateful_leaf(Token::LiteralInt)]
+    semi: u32,
 }
 
 // impl Parsable for Identifier  {
 //    fn parse(iter:&mut Iter) -> Result<Identifier, String> {
 //      let ident = match iter.get_next() {
 //          Some(Token::Identifier(ident)) => ident,
-//          Some(other_token) => Err(format!("Expected Token::Identifier, but got {}", other_token))
-//          _ => Err(format!("Expected Token::Identifier, but got {}",_)),
+//          Some(other_token) => return Err(format!("Expected Token::Identifier, but got {}", other_token))
+//          _ => return Err(format!("No more tokens",_)),
 //      }
-//      Ok(Identifier{ident})
+//      let semi = match iter.get_next() {
+//          Some(Token::semi(semi)) => semi,
+//          Some(other_token) => return Err(format!("Expected Token::semi, but got {}", other_token))
+//          _ => return Err(format!("No more tokens",_)),
+//      }
+//      Ok(Arg{ident, ty, semi})
 //    }
 // }
 
 fn main() {
 
     let mut iter = TokenIter::new(vec![
-        t!( ident "some_ident" )
+        t!( ident "some_ident" ),
+        t!( litint 32 )
     ]);
-    let result = Identifier::parse(&mut iter);
-    
-    assert!(result.unwrap().ident == "some_ident".to_string());
 
-    let mut iter = TokenIter::new(vec![
-        t!( ident "int" ),
-        t!( ident "arg1" ),
-        t!( , )
-    ]);
     let result = Arg::parse(&mut iter);
-    let expected = Arg::new("int".to_string(), "arg1".to_string(), ",".to_string());
+    let expected = Arg::new("some_ident".to_string(), 32);
     
     assert!(result == Ok(expected));
 }

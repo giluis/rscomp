@@ -3,11 +3,12 @@ use super::node::{Node, NodeType};
 use super::terminality::{BranchTerminality, IntoFieldTerminality};
 use quote::*;
 use syn::spanned::Spanned;
+use convert_case::Case;
 
 #[derive(Debug)]
 pub struct Branch {
     pub ident: syn::Ident,
-    pub desc: Descriptor,
+    pub descriptor: Descriptor,
     pub terminality: BranchTerminality,
 }
 
@@ -15,18 +16,28 @@ impl Branch {
     pub fn to_conjunction_statement(&self) -> proc_macro2::TokenStream {
         let branch_ident = &self.ident;
         match &self.terminality {
-            BranchTerminality::Leaf {
-                source: leaf_source,
+            BranchTerminality::StatefulLeaf {
+                source,
             } => {
                 quote! {
                     let #branch_ident =  match iter.get_next() {
-                        Some(#leaf_source(#branch_ident)) => #branch_ident,
+                        Some(#source(#branch_ident)) => #branch_ident,
                         None => return Err(format!("No more tokens")),
                         _ => return Err(format!("Expected a diffefent token")),
                     };
                 }
+            }, 
+            BranchTerminality::StatelessLeaf { source } => {
+                quote! {
+                    let #branch_ident =  match iter.get_next() {
+                        Some(#source) => #source,
+                        None => return Err(format!("No more tokens")),
+                        _ => return Err(format!("Expected a diffefent token")),
+                    };
+                }
+
             }
-            BranchTerminality::Reference => match &self.desc {
+            BranchTerminality::Reference => match &self.descriptor {
                 Descriptor::Bare(ty) => {
                     quote! {
                         let #branch_ident = iter.parse::<#ty>()? ;
@@ -37,33 +48,46 @@ impl Branch {
         }
     }
 
+                        // TODO: error handling: Different errors to simbolize lack of tokens VS wrong tokens
+                        // TODO: ensure iter always returns Ok(Token::A) for iter.peek_token(Token::A), or an error
     pub fn to_disjunction_statement(&self, node_name: &syn::Ident) -> proc_macro2::TokenStream {
         let branch_ident = &self.ident;
         match &self.terminality {
-            BranchTerminality::Leaf {
+            BranchTerminality::StatefulLeaf {
                 source: leaf_source,
             } => {
                 quote! {
-                    match iter.peek_token(#leaf_source) {
+                    match iter.peek_token(#leaf_source(Default::default())) {
                         Ok(#leaf_source(leaf_source_content)) => {
                             return Ok(#node_name::#branch_ident(leaf_source_content))
                         },
-                        Ok(_) => {
-                            return Err("Iotarnal error: ok result on Iter.peek_token(Token::SomeToken) should always return Token::SomeToken".to_string())
-                        },
-                        Err(_) => (), // do nothing for now,
-                        // TODO: Different errors to simbolize lack of tokens VS wrong tokens
+                        _ => (), 
+                        // TODO: "leaf_source_content" should be generated as lower case
                     };
                 }
+            }, 
+            BranchTerminality::StatelessLeaf { source: source_token } => {
+                quote! {
+                    match iter.peek_token(#source_token) {
+                        Ok(#source_token) => {
+                            return Ok(#node_name::#branch_ident(#source_token))
+                        },
+                        _ => (),
+                        // TODO: error handling: Different errors to simbolize lack of tokens VS wrong tokens
+                        // TODO: ensure iter always returns Ok(Token::A) for iter.peek_token(Token::A), or an error
+                    };
+                }
+
             }
-            BranchTerminality::Reference => match &self.desc {
+            BranchTerminality::Reference => match &self.descriptor {
                 Descriptor::Bare(ty) => {
                     quote! {
                         match iter.attempt::<#ty>(){
-                            Ok(r) => return #node_name::#branch_ident(r),
+                            Ok(#branch_ident) => return Ok(#node_name::#branch_ident(#branch_ident)),
                             Err(_) => (), // do nothing for now,
 
                         };
+                        // TODO: "branch_ident" should be generated as lower case
                     }
                 }
                 _ => unimplemented!("Optional and Repeatables have not been implemented yet"),
@@ -87,7 +111,7 @@ impl From<&syn::Field> for Branch {
     fn from(f: &syn::Field) -> Self {
         Branch {
             ident: f.ident.clone().unwrap(),
-            desc: f.ty.clone().into(),
+            descriptor: f.ty.clone().into(),
             terminality: f.into_field_terminality(),
         }
     }
@@ -106,6 +130,7 @@ trait LeafSourceExtractable {
 
 impl From<&syn::Variant> for Branch {
     fn from(v: &syn::Variant) -> Branch {
+        dbg!(v);
         let ty = match &v.fields {
             syn::Fields::Unnamed(syn::FieldsUnnamed { unnamed, .. }) => match unnamed.first() {
                 Some(a) => &a.ty,
@@ -117,7 +142,7 @@ impl From<&syn::Variant> for Branch {
         Branch {
             ident: v.ident.clone(),
             terminality: v.into_field_terminality(),
-            desc: ty.into(),
+            descriptor: ty.into(),
         }
     }
 }

@@ -79,7 +79,7 @@ impl Node {
     pub fn to_newfn(&self) -> proc_macro2::TokenStream {
         let node_ident = &self.ident;
         let (args, instantiation_fields) = self.branches.iter().map(|f|{
-            let fty = match &f.desc {
+            let fty = match &f.descriptor {
             Descriptor::Optional(t) => quote!{Option<#t>},
             Descriptor::Repeatable(t) => quote!{Vec<#t>},
             Descriptor::Bare(t) => quote!{#t},

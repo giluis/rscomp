@@ -1,5 +1,7 @@
 #![allow(dead_code)]
 #![allow(unused_imports)]
+#![feature(let_chains)]
+// #![warn(missing_docs)]
 
 mod util;
 mod node;
@@ -14,7 +16,7 @@ use crate::node::branch::Branch;
 use util::{ty_inner_type, UnzippableToVec};
 
 
-#[proc_macro_derive(AstNode, attributes(leaf))]
+#[proc_macro_derive(AstNode, attributes(stateless_leaf, stateful_leaf))]
 pub fn parse_consumer(input: proc_macro::TokenStream) -> proc_macro::TokenStream {
     let ast = parse_macro_input!(input as DeriveInput);
     // dbg!(ast.clone());
@@ -45,7 +47,7 @@ pub fn parse_consumer(input: proc_macro::TokenStream) -> proc_macro::TokenStream
 fn newfn(node_name: &syn::Ident, fields: &Vec<Branch>) -> proc_macro2::TokenStream {
 
     let (args, instantiation_fields) = fields.iter().map(|f|{
-        let fty = match &f.desc {
+        let fty = match &f.descriptor {
            Descriptor::Optional(t) => quote!{Option<#t>},
            Descriptor::Repeatable(t) => quote!{Vec<#t>},
            Descriptor::Bare(t) => quote!{#t},

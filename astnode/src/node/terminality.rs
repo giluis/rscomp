@@ -1,10 +1,9 @@
-
 #[derive(Debug)]
 pub enum BranchTerminality {
     Reference,
-    Leaf { source: syn::TypePath },
+    StatefulLeaf { source: syn::TypePath },
+    StatelessLeaf { source: syn::TypePath },
 }
-
 
 pub trait IntoFieldTerminality {
     fn into_field_terminality<'a>(&'a self) -> BranchTerminality
@@ -13,15 +12,18 @@ pub trait IntoFieldTerminality {
     {
         match self
             .get_attrs()
-            .filter(|attr| attr.path.segments.len() == 1 && attr.path.segments[0].ident == "leaf")
-            .nth(0)
+            .find(|attr| /* attr.path.segments.len() == 1 && */ attr.path.segments[0].ident == "stateful_leaf" || attr.path.segments[0].ident == "stateless_leaf" )
         {
             None => BranchTerminality::Reference,
-            Some(a) => BranchTerminality::Leaf {
-                source: a
-                    .parse_args::<syn::TypePath>()
-                    .expect("Could not extract leaf source from attribute"),
-            },
+            Some(attr) => {        
+                let source = attr.parse_args::<syn::TypePath>()
+                         .expect("Could not extract leaf source from attribute");
+                if attr.path.segments[0].ident == "stateful_leaf" {
+                    BranchTerminality::StatefulLeaf { source }
+                } else {
+                    BranchTerminality::StatelessLeaf { source }
+                }
+            }
         }
     }
 }
