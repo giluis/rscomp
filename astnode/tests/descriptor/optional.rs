@@ -4,31 +4,28 @@ use libcomp::parse::Parsable;
 use libcomp::token::{t, Token};
 
 #[derive(AstNode)]
-pub enum Punct {
-    #[stateless_leaf(Token::Assign)]
-    EqualSign(Token), 
-    SemiOrComma(SemiOrComma),
+pub struct Punct {
+
+    #[stateless_leaf(Token::KInt)]
+    kint: Option<Token>,
+
+    ident1: Option<Identifier>,
+
+    #[stateful_leaf(Token::Identifier)]
+    ident3: Option<String>,
 }
 
-#[derive(AstNode)]
-pub enum SemiOrComma {
-    #[stateless_leaf(Token::Comma)]
-    Comma(Token),
-
-    #[stateless_leaf(Token::SemiColon)]
-    Semi(Token),
-}
 
 /// impl Parsable for Type  {
 ///    
 /// fn parse(iter:&mut Iter) -> Result<TestEnum, String> {
 ///           
-///    match iter.attempt::<DoubleComma>(){
-///         Ok(DoubleComma) => return Ok(TestEnum::DoubleComma(DoubleComma)),
-///         Err(_) => (), 
+///    let ident = match iter.attempt::<Identifier>(){
+///         Ok(DoubleComma) => Some((DoubleComma)),
+///         Err(_) => None, 
 ///
 ///    };
-///    match iter.peek_token(Token::LitInt(Default::default())) {
+///    let comma = match iter.peek_token(Token::LitInt(Default::default())) {
 ///         Ok(Token::LitInt(LitInt)) => {
 ///             lreturn Ok(TestEnum::LitInt(LitInt))
 ///         },

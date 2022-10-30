@@ -39,10 +39,10 @@ pub enum Type {
 // }
 
 fn main() {
-    let mut iter = TokenIter::new(vec![
+    let mut iter = vec![
         t!( int ),
         t!( ident "some_function" )
-    ]);
+    ].into_token_iter();
     let result = iter.parse::<Type>();
     match result {
         Ok(Type::KInt(Token::KInt)) => (),

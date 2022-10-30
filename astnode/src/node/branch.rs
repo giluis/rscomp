@@ -1,9 +1,10 @@
 use super::descriptor::Descriptor;
 use super::node::{Node, NodeType};
 use super::terminality::{BranchTerminality, IntoFieldTerminality};
+use convert_case::{Case, Casing};
+use proc_macro2::Span;
 use quote::*;
 use syn::spanned::Spanned;
-use convert_case::Case;
 
 #[derive(Debug)]
 pub struct Branch {
@@ -16,9 +17,7 @@ impl Branch {
     pub fn to_conjunction_statement(&self) -> proc_macro2::TokenStream {
         let branch_ident = &self.ident;
         match &self.terminality {
-            BranchTerminality::StatefulLeaf {
-                source,
-            } => {
+            BranchTerminality::StatefulLeaf { source } => {
                 quote! {
                     let #branch_ident =  match iter.get_next() {
                         Some(#source(#branch_ident)) => #branch_ident,
@@ -26,7 +25,7 @@ impl Branch {
                         _ => return Err(format!("Expected a diffefent token")),
                     };
                 }
-            }, 
+            }
             BranchTerminality::StatelessLeaf { source } => {
                 quote! {
                     let #branch_ident =  match iter.get_next() {
@@ -35,7 +34,6 @@ impl Branch {
                         _ => return Err(format!("Expected a diffefent token")),
                     };
                 }
-
             }
             BranchTerminality::Reference => match &self.descriptor {
                 Descriptor::Bare(ty) => {
@@ -48,46 +46,50 @@ impl Branch {
         }
     }
 
-                        // TODO: error handling: Different errors to simbolize lack of tokens VS wrong tokens
-                        // TODO: ensure iter always returns Ok(Token::A) for iter.peek_token(Token::A), or an error
+    // TODO: error handling: Different errors to simbolize lack of tokens VS wrong tokens
+    // TODO: ensure iter always returns Ok(Token::A) for iter.peek_token(Token::A), or an error
     pub fn to_disjunction_statement(&self, node_name: &syn::Ident) -> proc_macro2::TokenStream {
         let branch_ident = &self.ident;
+        let snake_case_branch_ident = syn::Ident::new(
+            &branch_ident.to_string().to_case(Case::Snake),
+            Span::call_site(),
+        );
+        // let (optional_descriptor, repeatable_descriptor) = self.descriptor.as_iterator_arguments();
         match &self.terminality {
             BranchTerminality::StatefulLeaf {
                 source: leaf_source,
             } => {
                 quote! {
-                    match iter.peek_token(#leaf_source(Default::default())) {
-                        Ok(#leaf_source(leaf_source_content)) => {
-                            return Ok(#node_name::#branch_ident(leaf_source_content))
+                    match iter
+                            // #optional_descriptor
+                            // #repeatable_descriptor
+                            .peek_token(#leaf_source(Default::default())) {
+                        Ok(#leaf_source(#snake_case_branch_ident)) => {
+                            return Ok(#node_name::#branch_ident(#snake_case_branch_ident))
                         },
-                        _ => (), 
-                        // TODO: "leaf_source_content" should be generated as lower case
+                        _ => (),
                     };
                 }
-            }, 
-            BranchTerminality::StatelessLeaf { source: source_token } => {
+            }
+            BranchTerminality::StatelessLeaf {
+                source: source_token,
+            } => {
                 quote! {
                     match iter.peek_token(#source_token) {
                         Ok(#source_token) => {
                             return Ok(#node_name::#branch_ident(#source_token))
                         },
                         _ => (),
-                        // TODO: error handling: Different errors to simbolize lack of tokens VS wrong tokens
-                        // TODO: ensure iter always returns Ok(Token::A) for iter.peek_token(Token::A), or an error
                     };
                 }
-
             }
             BranchTerminality::Reference => match &self.descriptor {
                 Descriptor::Bare(ty) => {
                     quote! {
                         match iter.attempt::<#ty>(){
-                            Ok(#branch_ident) => return Ok(#node_name::#branch_ident(#branch_ident)),
+                            Ok(#snake_case_branch_ident) => return Ok(#node_name::#branch_ident(#snake_case_branch_ident)),
                             Err(_) => (), // do nothing for now,
-
                         };
-                        // TODO: "branch_ident" should be generated as lower case
                     }
                 }
                 _ => unimplemented!("Optional and Repeatables have not been implemented yet"),
@@ -112,7 +114,7 @@ impl From<&syn::Field> for Branch {
         Branch {
             ident: f.ident.clone().unwrap(),
             descriptor: f.ty.clone().into(),
-            terminality: f.into_field_terminality(),
+            terminality: f.as_field_terminality(),
         }
     }
 }
@@ -130,7 +132,6 @@ trait LeafSourceExtractable {
 
 impl From<&syn::Variant> for Branch {
     fn from(v: &syn::Variant) -> Branch {
-        dbg!(v);
         let ty = match &v.fields {
             syn::Fields::Unnamed(syn::FieldsUnnamed { unnamed, .. }) => match unnamed.first() {
                 Some(a) => &a.ty,
@@ -141,7 +142,7 @@ impl From<&syn::Variant> for Branch {
 
         Branch {
             ident: v.ident.clone(),
-            terminality: v.into_field_terminality(),
+            terminality: v.as_field_terminality(),
             descriptor: ty.into(),
         }
     }

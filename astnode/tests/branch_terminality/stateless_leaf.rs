@@ -47,9 +47,4 @@ fn main() {
     
     assert!(result.unwrap().kint == Token::KInt);
 
-
-    let mut ty = TokenIter::new(vec![
-        t!( int )
-    ]);
-    
 }

@@ -6,7 +6,7 @@ pub enum BranchTerminality {
 }
 
 pub trait IntoFieldTerminality {
-    fn into_field_terminality<'a>(&'a self) -> BranchTerminality
+    fn as_field_terminality<'a>(&'a self) -> BranchTerminality
     where
         Self: HasAttributes<'a> + syn::spanned::Spanned + Sized,
     {
