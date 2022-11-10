@@ -1,3 +1,4 @@
+
 use super::branch::Branch;
 use crate::util::UnzippableToVec;
 use crate::Descriptor;
@@ -6,6 +7,16 @@ use std::slice::Iter;
 use syn::DataStruct;
 use syn::DeriveInput;
 use syn::TypePath;
+
+
+
+#[derive(PartialEq,Eq)]
+enum Stage {
+    Lanched, 
+    Grounded
+}
+
+struct Rocket<const Stage:Stage>; 
 
 #[derive(Debug)]
 pub enum NodeType {
@@ -49,6 +60,25 @@ impl Node {
             .unzip_to_vec()
     }
 
+
+    pub fn disjunct_node_constructor(&self) -> proc_macro2::TokenStream {
+        let branches = self.branches.into_iter().map(|b|&b.ident).collect::<Vec<&syn::Ident>>();
+        let node_ident = &self.ident;
+        match self.node_type {
+            NodeType::ProductNode => {
+                // TODO: Best way to handle this.
+                panic!("Can only be called on sumNodes. This is an internal error, please report")
+            },
+            NodeType::SumNode => {
+                quote!{
+                    Ok(#node_ident:: {
+                        #(#branches,)*
+                    })
+                }
+            }
+        }
+    }
+
     pub fn to_parse_fn(&self) -> proc_macro2::TokenStream {
         let node_name = &self.ident;
         let (consumption_statements, branch_idents) = self.to_consumption_statements();
@@ -79,7 +109,7 @@ impl Node {
     pub fn to_newfn(&self) -> proc_macro2::TokenStream {
         let node_ident = &self.ident;
         let (args, instantiation_fields) = self.branches.iter().map(|f|{
-            let fty = match &f.descriptor {
+            let fty = match &f.type_descriptor {
             Descriptor::Optional(t) => quote!{Option<#t>},
             Descriptor::Repeatable(t) => quote!{Vec<#t>},
             Descriptor::Bare(t) => quote!{#t},

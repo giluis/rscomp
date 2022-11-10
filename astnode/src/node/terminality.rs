@@ -1,3 +1,5 @@
+use quote::*;
+
 #[derive(Debug)]
 pub enum BranchTerminality {
     Reference,
@@ -5,7 +7,53 @@ pub enum BranchTerminality {
     StatelessLeaf { source: syn::TypePath },
 }
 
-pub trait IntoFieldTerminality {
+impl BranchTerminality {
+    pub fn as_bare_consumption_fn_call(&self, inner_ty: &syn::Type)-> proc_macro2::TokenStream {
+        match &self {
+            Self::StatefulLeaf { source}
+             =>  { quote! {
+                    .expect_token(#source(Default::default())) 
+                        
+            } },
+            BranchTerminality::StatelessLeaf  {
+                source
+            } =>  quote! {
+                    .expect_token(#source) 
+            },
+            BranchTerminality::Reference  => {
+                quote!{
+                    .parse::<#inner_ty>()
+                }
+                
+            } 
+        }
+    }
+
+    pub fn as_optional_consumption_fn_call(&self, inner_ty: &syn::Type) -> proc_macro2::TokenStream {
+        match self {
+            Self::StatefulLeaf { source}
+            =>  { quote! {
+                    .expect_optional_token(#source(Default::default())) 
+                        
+            } },
+            Self::StatelessLeaf  {
+                source
+            } =>  quote! {
+                    .expect_optional_token(#source) 
+            },
+            Self::Reference  => {
+                quote!{
+                    .parse_optional::<#inner_ty>()
+                }
+                
+            } 
+        }
+
+    }
+}
+
+
+pub trait IntoBranchTerminality {
     fn as_field_terminality<'a>(&'a self) -> BranchTerminality
     where
         Self: HasAttributes<'a> + syn::spanned::Spanned + Sized,
@@ -28,8 +76,8 @@ pub trait IntoFieldTerminality {
     }
 }
 
-impl<'a> IntoFieldTerminality for &syn::Variant {}
-impl<'a> IntoFieldTerminality for &syn::Field {}
+impl<'a> IntoBranchTerminality for &syn::Variant {}
+impl<'a> IntoBranchTerminality for &syn::Field {}
 
 pub trait HasAttributes<'a> {
     fn get_attrs(&self) -> std::slice::Iter<'a, syn::Attribute>;

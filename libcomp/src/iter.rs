@@ -25,7 +25,6 @@ impl IntoTokenIter for Vec<Token> {
 }
 
 impl TokenIter {
-
     pub fn new(tokens: Vec<Token>) -> TokenIter {
         TokenIter {
             current: 0,
@@ -123,5 +122,7 @@ impl TokenIter {
     }
 
 }
+
+
 
 

@@ -1,6 +1,7 @@
 #![allow(dead_code)]
 #![allow(unused_imports)]
 #![feature(let_chains)]
+#![feature(adt_const_params)]
 // #![warn(missing_docs)]
 
 mod util;
@@ -47,7 +48,7 @@ pub fn parse_consumer(input: proc_macro::TokenStream) -> proc_macro::TokenStream
 fn newfn(node_name: &syn::Ident, fields: &Vec<Branch>) -> proc_macro2::TokenStream {
 
     let (args, instantiation_fields) = fields.iter().map(|f|{
-        let fty = match &f.descriptor {
+        let fty = match &f.type_descriptor {
            Descriptor::Optional(t) => quote!{Option<#t>},
            Descriptor::Repeatable(t) => quote!{Vec<#t>},
            Descriptor::Bare(t) => quote!{#t},

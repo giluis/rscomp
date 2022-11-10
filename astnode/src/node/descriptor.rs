@@ -6,6 +6,15 @@ pub enum Descriptor {
     Repeatable(syn::Type), // inner vec type
     Bare(syn::Type),
 }
+impl Descriptor {
+    pub fn get_inner_ty(&self) -> &syn::Type {
+        match self {
+            Self::Optional(ty) => ty,
+            Self::Repeatable(ty) => ty,
+            Self::Bare(ty) => ty,
+        }
+    }
+}
 
 impl From<syn::Type> for Descriptor {
     fn from(ty: syn::Type) -> Self {

@@ -6,9 +6,8 @@ use libcomp::parse::Parsable;
 #[derive(AstNode, PartialEq)]
 
 pub enum Type {
-
-    #[leaf( Token::KInt )]
-    KInt(String),
+    #[stateless_leaf( Token::KInt )]
+    KInt(Token),
 
     // #[leaf( Token::String )]
     // KFloat(String),
@@ -18,10 +17,6 @@ pub enum Type {
 
 }
 
-fn a()-> () {
-     let a:Result<u32,&str>  = Err("sdflkj",);
-}
-impl Type{}
 
 // #[derive(AstNode, PartialEq)]
 // pub struct AssignStatement {
@@ -69,7 +64,7 @@ fn main() {
     ]);
 
     let result = iter.parse::<Type>();
-    let expected = Type::KInt("int".to_string());
+    let expected = Type::KInt(Token::KInt);
     
     assert!(result == Ok(expected));
 }

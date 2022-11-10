@@ -1,16 +1,25 @@
 use super::descriptor::Descriptor;
 use super::node::{Node, NodeType};
-use super::terminality::{BranchTerminality, IntoFieldTerminality};
+use super::terminality::{BranchTerminality, IntoBranchTerminality};
 use convert_case::{Case, Casing};
 use proc_macro2::Span;
 use quote::*;
 use syn::spanned::Spanned;
 
+fn and() {}
+
+// pub struct InnerType(syn::Type);
+
+// impl From<syn::Type> for InnerType {
+//     fn from(ty: syn::Type) -> InnerType {}
+// }
+
 #[derive(Debug)]
 pub struct Branch {
     pub ident: syn::Ident,
-    pub descriptor: Descriptor,
+    pub type_descriptor: Descriptor,
     pub terminality: BranchTerminality,
+    // pub inner_ty: InnerType,
 }
 
 impl Branch {
@@ -35,7 +44,7 @@ impl Branch {
                     };
                 }
             }
-            BranchTerminality::Reference => match &self.descriptor {
+            BranchTerminality::Reference => match &self.type_descriptor {
                 Descriptor::Bare(ty) => {
                     quote! {
                         let #branch_ident = iter.parse::<#ty>()? ;
@@ -43,6 +52,49 @@ impl Branch {
                 }
                 _ => unimplemented!("Optional and Repeatables have not been implemented yet"),
             },
+        }
+    }
+
+    pub fn as_consumption_fn_call(&self) -> proc_macro2::TokenStream {
+        match (&self.terminality, &self.type_descriptor) {
+            (any_terminality, Descriptor::Bare(inner_ty)) => {
+                let consumption_fn_call = any_terminality.as_bare_consumption_fn_call(inner_ty);
+                quote! { #consumption_fn_call }
+            }
+            (any_terminality, Descriptor::Optional(inner_ty)) => {
+            let consumption_fn_call = any_terminality.as_optional_consumption_fn_call(inner_ty);
+                
+             quote! {
+                #consumption_fn_call
+            }},
+            (any_terminality, Descriptor::Repeatable(inner_ty)) => {
+                unimplemented!("Have not implemented repeatables yet")
+            }
+        }
+    }
+
+    pub fn to_consumption_statement2(&self, node_type: NodeType) -> proc_macro2::TokenStream {
+        let branch_ident = &self.ident;
+        let inner_ty = self.type_descriptor.get_inner_ty();
+        let consumption_fn_call = self.as_consumption_fn_call();
+
+        let peekable_if_disjunct = match node_type {
+            NodeType::ProductNode => quote! {},
+            NodeType::SumNode => quote! {.peek()},
+        };
+
+        let disjunct_conjunct_check = match node_type {
+            NodeType::ProductNode => {
+                quote!{let #branch_ident = #branch_ident?}
+            },
+            NodeType::SumNode => {
+                quote!{let #branch_ident = #branch_ident?}
+            }
+        }
+
+        quote! {
+            let #branch_ident = iter.#peekable_if_disjunct
+                                    .#consumption_fn_call
         }
     }
 
@@ -83,7 +135,7 @@ impl Branch {
                     };
                 }
             }
-            BranchTerminality::Reference => match &self.descriptor {
+            BranchTerminality::Reference => match &self.type_descriptor {
                 Descriptor::Bare(ty) => {
                     quote! {
                         match iter.attempt::<#ty>(){
@@ -113,7 +165,7 @@ impl From<&syn::Field> for Branch {
     fn from(f: &syn::Field) -> Self {
         Branch {
             ident: f.ident.clone().unwrap(),
-            descriptor: f.ty.clone().into(),
+            type_descriptor: f.ty.clone().into(),
             terminality: f.as_field_terminality(),
         }
     }
@@ -143,7 +195,7 @@ impl From<&syn::Variant> for Branch {
         Branch {
             ident: v.ident.clone(),
             terminality: v.as_field_terminality(),
-            descriptor: ty.into(),
+            type_descriptor: ty.into(),
         }
     }
 }
