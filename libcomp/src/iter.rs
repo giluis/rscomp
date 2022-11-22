@@ -1,6 +1,7 @@
-use crate::token::Token;
+use crate::collection_builder::{parse_collection, CollectionBuilder};
+use crate::disjunct_result_wrapper::DisjunctResultWrapper;
 use crate::parse::Parsable;
-use crate::collection_builder::{CollectionBuilder, parse_collection};
+use crate::token::Token;
 use std::cmp::PartialEq;
 
 #[cfg(test)]
@@ -11,7 +12,7 @@ pub struct TokenIter {
     pub current: usize,
     pub tokens: Vec<Token>,
     size: usize,
-    stack: Vec<usize>
+    stack: Vec<usize>,
 }
 
 pub trait IntoTokenIter {
@@ -30,85 +31,114 @@ impl TokenIter {
             current: 0,
             size: tokens.len(),
             tokens,
-            stack: vec![]
+            stack: vec![],
         }
     }
 
-    pub fn parse<T>(&mut self) -> Result<T,String>
-     where T : Parsable {
-         T::parse(self)
+    pub fn parse<T>(&mut self) -> Result<T, String>
+    where
+        T: Parsable,
+    {
+        T::parse(self)
     }
 
-    pub fn expect(&mut self, token:Token) -> Result<Token, String>{
-         let error = "iter has run out of bounds";
-         let result = self.get_next().ok_or(error)?;
-         let expected_error = format!(" expected {:?} but got {:?}", result, token);
-         if result.is_same_variant(& token) {
-             Ok(result)
-         } else {
-             Err(expected_error)
-         }
+    pub fn disjunct_parse<T>(&mut self) -> DisjunctResultWrapper<T, String>
+    where
+        T: Parsable,
+    {
+        DisjunctResultWrapper(self.parse::<T>())
     }
 
-    pub fn attempt<T>(&mut self)-> Result<T, String>
-    where T:Parsable{
+    pub fn expect(&mut self, token: Token) -> Result<Token, String> {
+        let error = "iter has run out of bounds";
+        let result = self.get_next().ok_or(error)?;
+        let expected_error = format!(" expected {:?} but got {:?}", result, token);
+        if result.is_same_variant(&token) {
+            Ok(result)
+        } else {
+            Err(expected_error)
+        }
+    }
+
+    pub fn disjunct_expect(&mut self, token: Token) -> DisjunctResultWrapper<Token, String> {
+        DisjunctResultWrapper(self.expect(token))
+    }
+
+    pub fn attempt<T>(&mut self) -> Result<T, String>
+    where
+        T: Parsable,
+    {
         self.push();
         let result = self.parse::<T>();
         match result {
-            Ok(_) => { 
+            Ok(_) => {
                 self.clean_pop();
                 result
-            },
+            }
             Err(_) => {
                 self.pop();
                 result
             }
         }
-
     }
-     
+    pub fn disjunct_attempt<T>(&mut self) -> DisjunctResultWrapper<T, String>
+    where
+        T: Parsable,
+    {
+        DisjunctResultWrapper(self.attempt::<T>())
+    }
     pub fn increment(&mut self) -> usize {
         self.current += 1;
         self.current
     }
 
-    pub fn collection<T>(&mut self) -> CollectionBuilder<T> where T: Parsable + PartialEq + std::fmt::Debug {
+    pub fn collection<T>(&mut self) -> CollectionBuilder<T>
+    where
+        T: Parsable + PartialEq + std::fmt::Debug,
+    {
         parse_collection::<T>(self)
     }
 
     pub fn push(&mut self) {
         self.stack.push(self.current);
     }
-    
-    pub fn clean_pop(&mut self){
+
+    pub fn clean_pop(&mut self) {
         self.stack.pop();
     }
 
-    pub fn pop(&mut self) -> Option<usize>{
+    pub fn pop(&mut self) -> Option<usize> {
         match self.stack.pop() {
-            Some(c) => { 
+            Some(c) => {
                 self.current = c;
                 Some(c)
-            } ,
-            None => None
+            }
+            None => None,
         }
     }
 
-    pub fn peek<T>(&mut self) -> Result<T, String> where T: Parsable {
+    pub fn peek<T>(&mut self) -> Result<T, String>
+    where
+        T: Parsable,
+    {
         self.push();
         let result = T::parse(self);
         self.pop();
         result
     }
 
-    pub fn peek_token(&mut self, token:Token) -> Result<Token, String> {
-         self.push(); 
-         let result = self.expect(token);
-         self.pop(); 
-         result
+    pub fn peek_token(&mut self, token: Token) -> Result<Token, String> {
+        self.push();
+        let result = self.expect(token);
+        self.pop();
+        result
     }
 
-    pub fn get_next(&mut self) -> Option<Token>{
+    pub fn disjunct_peek_token(&mut self, token: Token) -> DisjunctResultWrapper<Token, String> {
+        DisjunctResultWrapper(self.peek_token(token))
+    }
+
+    pub fn get_next(&mut self) -> Option<Token> {
         let result = self.get();
         self.increment();
         result
@@ -120,9 +150,4 @@ impl TokenIter {
         }
         None
     }
-
 }
-
-
-
-

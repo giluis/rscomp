@@ -32,6 +32,19 @@ mod iter_tests {
         }
     }
 
+    #[test]
+    fn disjunct_expect() {
+        let mut iter = TokenIter::new(vec![
+            t!(litint 32)
+        ]);
+
+        let result = iter.disjunct_expect(t!(litint 32));
+        
+        let expected = DisjunctResultWrapper::<Token,String>(Ok(t!(litint 32)));
+
+        assert!(expected == result);
+
+    }
 
     #[test]
     fn peek(){

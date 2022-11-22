@@ -9,7 +9,7 @@ pub enum BranchTerminality {
 
 impl BranchTerminality {
     pub fn as_bare_consumption_fn_call(&self, inner_ty: &syn::Type)-> proc_macro2::TokenStream {
-        match &self {
+        match self {
             Self::StatefulLeaf { source}
              =>  { quote! {
                     .expect_token(#source(Default::default())) 

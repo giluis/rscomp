@@ -1,356 +1,69 @@
-use astnode::{AstNode};
-use libcomp::token::{Token, t};
-use libcomp::iter::TokenIter;
+use astnode::AstNode;
+use libcomp::iter::{IntoTokenIter, TokenIter};
 use libcomp::parse::Parsable;
+use libcomp::token::{t, Token};
 
-#[derive(AstNode, PartialEq)]
+#[derive(AstNode)]
+pub enum TestEnum {
+    DoubleComma(DoubleComma),
 
-pub enum Type {
-    #[stateless_leaf( Token::KInt )]
-    KInt(Token),
+    #[stateful_leaf(Token::LiteralInt)]
+    LitInt(u32),
 
-    // #[leaf( Token::String )]
-    // KFloat(String),
-
-    // #[leaf( Token::KInt )]
-    // KChar(String),
-
+    #[stateless_leaf(Token::SemiColon)]
+    SemiColon(Token),
 }
 
+#[derive(AstNode)]
+pub struct DoubleComma {
+    #[stateless_leaf(Token::Comma)]
+    comma1: Token,
 
-// #[derive(AstNode, PartialEq)]
-// pub struct AssignStatement {
-//     ty: Type,
+    #[stateless_leaf(Token::Comma)]
+    comma2: Token,
+}
 
-//     #[leaf( Token::Identifier )]
-//     ident: String,
+/// impl Parsable for Type  {
+///    
+/// fn parse(iter:&mut Iter) -> Result<TestEnum, String> {
+///           
+///    match iter.attempt::<DoubleComma>(){
+///         Ok(DoubleComma) => return Ok(TestEnum::DoubleComma(DoubleComma)),
+///         Err(_) => (), 
+///
+///    };
+///    match iter.peek_token(Token::LitInt(Default::default())) {
+///         Ok(Token::LitInt(LitInt)) => {
+///             lreturn Ok(TestEnum::LitInt(LitInt))
+///         },
+///         Err(_) => (),
+///    };
+///    match iter.peek_token(Token::SemiColon) {
+///         Ok(Token::SemiColon) => {
+///             lreturn Ok(TestEnum::SemiColon(Token::SemiColon))
+///         },
+///         Err(_) => (),
+///    };
+///    return Err("could not parse any of the variants for this sum node".to_string())
+/// }
+/// 
 
-//     #[leaf( Token::Assign )]
-//     equals_sign: String,
 
 
-//     #[leaf( Token::LiteralInt )]
-//     value: u32
-
-// }
-
-// #[derive(AstNode, PartialEq)]
-// pub struct Type {
-//     #[leaf(Token::KInt)]
-//     int: String,
-// }
-
-
-
-// impl Parsable for Type  {
-//    fn parse(iter:&mut Iter) -> Result<Type, String> {
-//      let int = match iter.expect(Token::KInt) ? {
-//          Token::KInt(int) => int,
-//          _ => panic!("Internal error: Ok result for iter.expect should always yield token of the same kind as input "),
-//      }
-//
-//      Ok(Type {
-//          int
-//      })
-//    }
-// }
 
 fn main() {
-    let mut iter = TokenIter::new(vec![
-        t!( int ),
-     //    t!( ident "var1" ),
-     //    t!( = ),
-     //    t!( litint 5 )
-    ]);
-
-    let result = iter.parse::<Type>();
-    let expected = Type::KInt(Token::KInt);
-    
-    assert!(result == Ok(expected));
+    let mut iter = vec![
+        t!(,),
+        t!(,),
+        ].into_token_iter();
+    let result = iter.parse::<TestEnum>();
+    match result {
+        Ok(TestEnum::DoubleComma(DoubleComma {
+            comma1: Token::Comma,
+            comma2: Token::Comma,
+        })) => (),
+        Ok(_) => panic!("Expect DoubleComma variant, but didn't get that "), // internal error: token should always be t! (int) when result is OK
+        _ => panic!("Expecte Ok Result"),
+    }
+    // assert!(currentBefore + 1 == iter.current );
 }
-
-// #[derive(AstNode, Debug)]
-// pub struct Identifier {
-//     #[leaf(Token::Identifier)]
-//     ident:String,
-
-//     #[leaf(Token::Identifier)]
-//     another:String,
-// }
-
-
-/*
- 
-   #[derive(AstNode)]
-   pub struct Function {
-        return_type: Type
-        ident: TIdent;
-        args: Args;
-        body: Body;
-   }
-   
-   impl Parseable for Function {
-       fn parse(iter: &mut TokenIter) -> Result<Function, String> {
-            let return_type = iter.parse::<Type>()?;
-            let ident = iter.parse::<TIdent>()?;
-            let args = iter.parse::<Args>()?;
-            let body = iter.parse::<Body>()?;
-
-            return Ok(Function{
-                return_type,
-                ident,
-                args,
-                body,
-            })
-
-
-       }
-   }
-
-
-   #[derive(AstNode)]
-   pub struct Body {
-        #[ast(
-            del = t!( {} ), 
-            sep = t!( ; )
-        )]
-        statements: Vec<Statement>
-   }
-
-   impl ParseAST for Body {
-       fn parse(iter: &mut TokenIter) -> Result<Body, String> {
-            let statements = iter.collection::<Statement>()
-                                                .delimiter(Token::LeftCurly, Token::RightCurly)
-                                                .separator(Token::SemiColon)
-                                                .parse()?;
-            return Ok(Body{
-                statements
-            })
-       }
-   }
-
-   #[derive(AstNode)]
-   pub enum Statement {
-        Assign(AssignStatement)
-        Return(ReturnStatement)
-   }
-
-   impl ParseAST for Statement {
-       fn parse(iter: &mut TokenIter) -> Result<Statement, String> {
-           match iter.parse<AssignStatement>() {
-                Ok(AssignStatement) => return Ok(Statement::Assign(AssignStatement)),
-                Err => ()
-           }
-           match iter.parse<ReturnStatement>() {
-                Ok(return_statement) => return Ok(Statement::Return(return_statement)),
-                Err => ()
-           }
-           Err("Expected statement here");
-   }
-
-
-
-   #[derive(AstNode)]
-   pub struct AssignStatement {
-
-        var_type: Type;
-        var_ident: Ident;
-
-        #[ast(token = t!( = ))]
-        equal_sign: Token;
-        expression: Expression;
-   }
-
-   impl ParseAST for AssignStatement {
-       fn parse(iter: &mut TokenIter) -> Result<AssignStatement, String> {
-            return Ok(AssignmentStatement {
-                 iter.parse<Type>()?, 
-                 iter.parse<Ident>()?, 
-                 iter.parse<t!( = )>()?,
-                 iter.parse<Expression>()?,
-            })
-   }
-
-   #[derive(AstNode)]
-   pub struct ReturnStatement {
-
-        #[ast(token = t!( return ))]
-        _: KReturn;
-
-        expression: Expression;
-   }
-
-   impl ParseAST for ReturnStatement {
-       fn parse(iter: &mut TokenIter) -> Result<ReturnStatement, String> {
-            return Ok(ReturnStatement {
-                 iter.parse<t!( return )>()?, 
-                 iter.parse<Expression>()?,
-            })
-   }
-
-   #[derive(AstNode)]
-   pub struct KReturn {
-
-        #[ast(from_token = t!( return ))]
-        return_token: String;
-   }
-
-   impl ParseAST for KReturn {
-       fn parse(iter: &mut TokenIter) -> Result<KReturn, String> {
-            return Ok(KReturn {
-                return_token: match iter.parse_token(t!(return))? {
-                    Token::KWReturn(return_token) => return_token,
-                    _ => panic!("Internal consitency error, please report"),
-                }, 
-            })
-   }
-
-
-
-   #[derive(AstNode)]
-   pub struct Type {
-        qualifiers: Vec<Qualifier>
-        pointer: Option<Pointer> 
-        type: ConcreteType
-   }
-
-   impl ParseAST for Type {
-       fn parse(iter: &mut TokenIter) -> Result<Type, String> {
-            return Ok(Type {
-                qualifiers : iter.parse_collection<Qualifier>()?,
-                pointer : iter.parse_possibly<Pointer>(),
-                concrete_type : iter.parse<ConcreteType()>?,
-            })
-   }
-
-
-   pub struct Pointer {
-        #[ast(minlen = 1)]
-        pointers: Vec<t!( * )>;
-
-        #[ast(count = pointers)]
-        pointer_dimension: u8;
-   }
-
-   impl ParseAST for Pointer {
-       fn parse(iter: &mut TokenIter) -> Result<Pointer, String> {
-            let pointers= iter.collection<t!( * )>()
-                                .min_len(1)
-                                .parse()?,
-            return Ok(Pointer {
-                pionter_dimension: pointers.len(),
-                pointers: pointers,
-            })
-   }
-
-
-   #[derive(AstNode)]
-   pub enum Qualifier {
-        Static(TKwStatic),
-
-        Const(TKwConst),
-   }
-
-   impl ParseAST for Qualifier {
-       fn parse(iter: &mut TokenIter) -> Result<Qualifier, String> {
-           match iter.parse<TKwStatic>() {
-                Ok(tkwstatic) => return Ok(Qualifier::Static(tkwstatic)),
-                Err => ()
-           }
-           match iter.parse<TKwConst>() {
-                Ok(tkwconst) => return Ok(Qualifier::Const(tkwconst)),
-                Err => ()
-           }
-           Err("Expected qualifier here");
-   }
-
-
-
-
-
-   #[derive(AstNode)]
-   pub enum ConcreteType {
-        Int(TKwInt),
-
-        Char(TKwChar),
-
-        Long(TKwLong),
-
-        Short(TKwShort),
-   }
-
-   impl ParseAST for ConcreteType {
-       fn parse(iter: &mut TokenIter) -> Result<ConcreteType, String> {
-           match iter.parse<TKwInt>() {
-                Ok(tkwint) => return Ok(ConcreteType::Static(tkwint)),
-                Err => ()
-           };
-           match iter.parse<TKwChar>() {
-                Ok(tkwchar) => return Ok(ConcreteType::Const(tkwchar)),
-                Err => ()
-           };
-           match iter.parse<TKwLong>() {
-                Ok(tkwlong) => return Ok(ConcreteType::Const(tkwlong)),
-                Err => ()
-           };
-           match iter.parse<TkwShort>() {
-                Ok(tkwshort) => return Ok(ConcreteType::Const(tkwshort)),
-                Err => ()
-           };
-           Err("Expected ConcreteType here");
-   }
-
-
-   #[derive(AstNode)]
-   pub struct FunctionArgs {
-        #[ast(del = "()", sep = ",")]
-        args: Vec<Arg>
-   }
-
-   impl ParseAST for FunctionArgs {
-       fn parse(iter: &mut TokenIter) -> Result<FunctionArgs, String> {
-            let args = iter.collection::<Arg>()
-                                   .delimiter(Token::LeftParen, Token::RightParen)
-                                   .separator(Token::Colon)
-                                   .parse()?;
-            return Ok(FunctionArgs{
-                args
-            })
-       }
-   }
-
-
-   #[derive(AstNode)]
-   pub struct Arg {
-        arg_type: Type;
-        arg_identifier: Ident;
-   }
-
-   impl ParseAST for Arg {
-       fn parse(iter: &mut TokenIter) -> Result<FunctionArgs, String> {
-            return Ok(FunctionArgs{
-                arg_type: iter.parse<Type>()?,
-                arg_identifier: iter.parse<TIdent>()?,
-
-            })
-       }
-   }
-
-  
- * */
-
-
-// use derive_builder::Builder;
-
-// #[derive(Builder)]
-// pub struct Command {
-//     executable: String,
-//
-//     #[builder(each = "arg")]
-//     args: Vec<String>,
-//
-//     #[builder(each = "env")]
-//     env: Vec<String>,
-//     current_dir: Option<String>,
-// }
-

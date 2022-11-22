@@ -10,14 +10,6 @@ use syn::TypePath;
 
 
 
-#[derive(PartialEq,Eq)]
-enum Stage {
-    Lanched, 
-    Grounded
-}
-
-struct Rocket<const Stage:Stage>; 
-
 #[derive(Debug)]
 pub enum NodeType {
     ProductNode,
@@ -52,7 +44,7 @@ impl Node {
                 (
                     match self.node_type {
                         NodeType::ProductNode => b.to_conjunction_statement(),
-                        NodeType::SumNode => b.to_disjunction_statement(&self.ident),
+                        NodeType::SumNode => b.to_disjunction_statement(),
                     },
                     &b.ident,
                 )
@@ -62,7 +54,7 @@ impl Node {
 
 
     pub fn disjunct_node_constructor(&self) -> proc_macro2::TokenStream {
-        let branches = self.branches.into_iter().map(|b|&b.ident).collect::<Vec<&syn::Ident>>();
+        let branches = self.branches.iter().map(|b|&b.ident).collect::<Vec<&syn::Ident>>();
         let node_ident = &self.ident;
         match self.node_type {
             NodeType::ProductNode => {
@@ -84,10 +76,15 @@ impl Node {
         let (consumption_statements, branch_idents) = self.to_consumption_statements();
         let fn_body = match self.node_type {
             NodeType::SumNode => {
-                    quote! {
-                    #(#consumption_statements)*
-                    return Err("could not parse any of the variants for this sum node".to_string());
-                }
+                    quote!{
+                        #(
+                            #consumption_statements;
+                            if let Some(result) = #branch_idents{
+                                return Ok(#node_name::#branch_idents(result));
+                            };
+                        )*
+                        return Err("could not parse any of the variants for this sum node".to_string());
+                    } 
             }
             NodeType::ProductNode => {
                 quote! {
