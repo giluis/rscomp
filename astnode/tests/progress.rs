@@ -9,8 +9,8 @@ fn tests() {
     // t.pass("tests/branch_terminality/all_together.rs");
 
     t.pass("tests/enum/one_variant.rs");
-    t.pass("tests/enum/many_variants.rs");
-    t.pass("tests/enum/ref_to_enum.rs");
+    // t.pass("tests/enum/many_variants.rs");
+    // t.pass("tests/enum/ref_to_enum.rs");
 
     // t.pass("tests/compiles.rs");
     // t.pass("tests/simple_leaf.rs");

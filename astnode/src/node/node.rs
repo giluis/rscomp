@@ -42,34 +42,13 @@ impl Node {
             .iter()
             .map(|b| {
                 (
-                    match self.node_type {
-                        NodeType::ProductNode => b.to_conjunction_statement(),
-                        NodeType::SumNode => b.to_disjunction_statement(),
-                    },
+                    b.to_consumption_statement(&self.node_type),
                     &b.ident,
                 )
             })
             .unzip_to_vec()
     }
 
-
-    pub fn disjunct_node_constructor(&self) -> proc_macro2::TokenStream {
-        let branches = self.branches.iter().map(|b|&b.ident).collect::<Vec<&syn::Ident>>();
-        let node_ident = &self.ident;
-        match self.node_type {
-            NodeType::ProductNode => {
-                // TODO: Best way to handle this.
-                panic!("Can only be called on sumNodes. This is an internal error, please report")
-            },
-            NodeType::SumNode => {
-                quote!{
-                    Ok(#node_ident:: {
-                        #(#branches,)*
-                    })
-                }
-            }
-        }
-    }
 
     pub fn to_parse_fn(&self) -> proc_macro2::TokenStream {
         let node_name = &self.ident;
@@ -79,9 +58,6 @@ impl Node {
                     quote!{
                         #(
                             #consumption_statements;
-                            if let Some(result) = #branch_idents{
-                                return Ok(#node_name::#branch_idents(result));
-                            };
                         )*
                         return Err("could not parse any of the variants for this sum node".to_string());
                     } 
@@ -126,7 +102,7 @@ impl Node {
     }
 }
 
-impl From<syn::DeriveInput> for Node {
+impl  From<syn::DeriveInput> for Node {
     fn from(derive_input: syn::DeriveInput) -> Self {
         let (branches, node_type) = match derive_input.data {
             syn::Data::Struct(data_struct) => {
@@ -144,11 +120,11 @@ impl From<syn::DeriveInput> for Node {
 }
 
 trait IntoBranches {
-    fn into_branches(self) -> Vec<Branch>;
+    fn into_branches<'a>(self) -> Vec<Branch>;
 }
 
-impl IntoBranches for syn::Fields {
-    fn into_branches(self) -> Vec<Branch> {
+impl  IntoBranches for syn::Fields  {
+    fn into_branches<'a>(self) -> Vec<Branch > {
         match self {
             syn::Fields::Named(syn::FieldsNamed {
                 named: fields_named,
@@ -165,7 +141,7 @@ impl IntoBranches for syn::Fields {
 }
 
 impl IntoBranches for syn::punctuated::Punctuated<syn::Variant, syn::token::Comma> {
-    fn into_branches(self) -> Vec<Branch> {
+    fn into_branches<'a>(self) -> Vec<Branch> {
         self.iter().map(|v| v.into()).collect()
     }
 }

@@ -1,69 +1,53 @@
 use astnode::AstNode;
-use libcomp::iter::{IntoTokenIter, TokenIter};
+use libcomp::token::{ Token, t};
+use libcomp::iter::{TokenIter, IntoTokenIter};
 use libcomp::parse::Parsable;
-use libcomp::token::{t, Token};
+// use crate::common::fail;
 
 #[derive(AstNode)]
-pub enum TestEnum {
-    DoubleComma(DoubleComma),
+pub enum Type {
 
-    #[stateful_leaf(Token::LiteralInt)]
-    LitInt(u32),
+    #[stateless_leaf( Token::KInt )]
+    KInt(Token),
 
-    #[stateless_leaf(Token::SemiColon)]
-    SemiColon(Token),
+    // #[leaf( Token::String )]
+    // KFloat(String),
+
+    // #[leaf( Token::KInt )]
+    // KChar(String),
+
 }
 
-#[derive(AstNode)]
-pub struct DoubleComma {
-    #[stateless_leaf(Token::Comma)]
-    comma1: Token,
-
-    #[stateless_leaf(Token::Comma)]
-    comma2: Token,
-}
-
-/// impl Parsable for Type  {
-///    
-/// fn parse(iter:&mut Iter) -> Result<TestEnum, String> {
-///           
-///    match iter.attempt::<DoubleComma>(){
-///         Ok(DoubleComma) => return Ok(TestEnum::DoubleComma(DoubleComma)),
-///         Err(_) => (), 
-///
-///    };
-///    match iter.peek_token(Token::LitInt(Default::default())) {
-///         Ok(Token::LitInt(LitInt)) => {
-///             lreturn Ok(TestEnum::LitInt(LitInt))
-///         },
-///         Err(_) => (),
-///    };
-///    match iter.peek_token(Token::SemiColon) {
-///         Ok(Token::SemiColon) => {
-///             lreturn Ok(TestEnum::SemiColon(Token::SemiColon))
-///         },
-///         Err(_) => (),
-///    };
-///    return Err("could not parse any of the variants for this sum node".to_string())
-/// }
-/// 
-
-
-
+// impl Parsable for Type  {
+//    fn parse(iter:&mut Iter) -> Result<Type, String> {
+//      
+//      match iter.expect(Token::KInt)? {
+//          Token::KInt(kint) => return OK(Type::KInt(kint)),
+//          _ => ()
+//      };
+//      match iter.expect(Token::KFloat)? {
+//          Token::KFloat(kfloat) => return OK(Type::KFloat(kfloat)),
+//          _ => ()
+//      };
+//      match iter.expect(Token::KChar)? {
+//          Token::KChar(kchar) => return OK(Type::KChar(kchar)),
+//          _ => ()
+//      };
+//
+//      Err("Expected Token::KInt, Token::KFloar, Token::KChar".to_string())
+//    }
+// }
 
 fn main() {
     let mut iter = vec![
-        t!(,),
-        t!(,),
-        ].into_token_iter();
-    let result = iter.parse::<TestEnum>();
+        t!( int ),
+        t!( ident "some_function" )
+    ].into_token_iter();
+    let result = iter.parse::<Type>();
     match result {
-        Ok(TestEnum::DoubleComma(DoubleComma {
-            comma1: Token::Comma,
-            comma2: Token::Comma,
-        })) => (),
-        Ok(_) => panic!("Expect DoubleComma variant, but didn't get that "), // internal error: token should always be t! (int) when result is OK
-        _ => panic!("Expecte Ok Result"),
+        Ok(Type::KInt(Token::KInt)) => (),
+        Ok(_) => panic!("There is only one variant to this enum"), // internal error: token should always be t! (int) when result is OK
+        _ => panic!("Should return Ok")
     }
     // assert!(currentBefore + 1 == iter.current );
 }
