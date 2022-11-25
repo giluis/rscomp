@@ -17,25 +17,19 @@ fn and() {}
 #[derive(Debug)]
 pub struct Branch {
     pub ident: syn::Ident,
-    pub type_descriptor: Descriptor,
     pub terminality: BranchTerminality,
+    pub ty: syn::Type,
     // pub inner_ty: InnerType,
     // pub full_type: syn::Type,
 }
 
 impl Branch {
-    pub fn to_consumption_statement(&self, node_type: &NodeType) -> proc_macro2::TokenStream {
+    pub fn to_consumption_statement(&self, node_name: &syn::Ident, node_type: &NodeType) -> proc_macro2::TokenStream {
         let (consumption_fn_call, assignment) = match node_type {
             NodeType::SumNode => (
-                {
-                    let c = self.terminality.as_disjunct_fn_call() ;
-                    let b = self.terminality.as_disjunct_node_construction_call() ;
-                    quote!{
-                        c.construct_node(|result_of_parsing| )
-                    }
-
-.construct_node(|result_of_parsing| #node_name::#branch_ident) }
-                format_ident!("{}_err", &self.ident.as_snake_case()),
+                
+                    self.terminality.as_disjunct_fn_call(node_name, &self.ident) ,
+                    format_ident!("{}_err", &self.ident.as_snake_case()),
             ),
             // TODO: remove this clone()
             NodeType::ProductNode => (self.terminality.as_conjunct_fn_call(), self.ident.clone()),
@@ -48,8 +42,8 @@ impl From<&syn::Field> for Branch {
     fn from(f: &syn::Field) -> Self {
         Branch {
             ident: f.ident.clone().unwrap(),
-            type_descriptor: f.ty.clone().into(),
             terminality: f.as_branch_terminality(),
+            ty: f.ty.clone(),
         }
     }
 }
@@ -77,8 +71,8 @@ impl From<&syn::Variant> for Branch {
 
         Branch {
             ident: v.ident.clone(),
+            ty: ty.clone(),
             terminality: v.as_branch_terminality(),
-            type_descriptor: ty.into(),
         }
     }
 }

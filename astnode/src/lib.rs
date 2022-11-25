@@ -1,7 +1,7 @@
 #![allow(dead_code)]
 #![allow(unused_imports)]
 #![feature(let_chains)]
-#![feature(adt_const_params)]
+// #![feature(adt_const_params)]
 // #![warn(missing_docs)]
 
 mod util;
@@ -44,44 +44,6 @@ pub fn parse_consumer(input: proc_macro::TokenStream) -> proc_macro::TokenStream
 
     }.into()
 }
-
-fn newfn(node_name: &syn::Ident, fields: &Vec<Branch>) -> proc_macro2::TokenStream {
-
-    let (args, instantiation_fields) = fields.iter().map(|f|{
-        let fty = match &f.type_descriptor {
-           Descriptor::Optional(t) => quote!{Option<#t>},
-           Descriptor::Repeatable(t) => quote!{Vec<#t>},
-           Descriptor::Bare(t) => quote!{#t},
-        };
-        let fident = &f.ident;
-        (quote!{
-            #fident: #fty
-        },quote!{#fident})
-    }).unzip_to_vec();
-    quote!{
-        fn new(#(#args),*) -> Self {
-            #node_name {
-               #(#instantiation_fields),*
-            }
-        }
-    }
-}
-
-fn get_fields<'a>(ast: &DeriveInput) -> Vec<Branch>{
-    let raw_fields = match &ast.data {
-            syn::Data::Struct(syn::DataStruct {
-                fields: syn::Fields::Named(syn::FieldsNamed {
-                    named: fields,
-                    ..
-                }),
-                ..
-            }) => fields,
-            _ => unimplemented!("What to do when fields are not named")
-        };
-    raw_fields.iter().map(|f|f.into()).collect()
-}
-
-
 
 
 

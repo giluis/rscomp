@@ -42,11 +42,20 @@ impl TokenIter {
         T::parse(self)
     }
 
+
+    // TODO: generalize push and clean/pop if ok 
     pub fn disjunct_parse<T>(&mut self) -> DisjunctResultWrapper<T, String>
     where
         T: Parsable,
     {
-        DisjunctResultWrapper(self.parse::<T>())
+        self.push();
+        let r = self.parse::<T>();
+        if r.is_ok() {
+            self.clean_pop();
+        } else {
+            self.pop();
+        };
+        DisjunctResultWrapper(r)
     }
 
     pub fn expect(&mut self, token: Token) -> Result<Token, String> {
@@ -61,8 +70,16 @@ impl TokenIter {
     }
 
     pub fn disjunct_expect(&mut self, token: Token) -> DisjunctResultWrapper<Token, String> {
-        DisjunctResultWrapper(self.expect(token))
+        self.push();
+        let r = self.expect(token);
+        if r.is_ok() {
+            self.clean_pop();
+        } else {
+            self.pop();
+        };
+        DisjunctResultWrapper(r)
     }
+
 
     pub fn attempt<T>(&mut self) -> Result<T, String>
     where

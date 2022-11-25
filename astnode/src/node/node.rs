@@ -42,7 +42,7 @@ impl Node {
             .iter()
             .map(|b| {
                 (
-                    b.to_consumption_statement(&self.node_type),
+                    b.to_consumption_statement(&self.ident,&self.node_type),
                     &b.ident,
                 )
             })
@@ -81,13 +81,9 @@ impl Node {
 
     pub fn to_newfn(&self) -> proc_macro2::TokenStream {
         let node_ident = &self.ident;
-        let (args, instantiation_fields) = self.branches.iter().map(|f|{
-            let fty = match &f.type_descriptor {
-            Descriptor::Optional(t) => quote!{Option<#t>},
-            Descriptor::Repeatable(t) => quote!{Vec<#t>},
-            Descriptor::Bare(t) => quote!{#t},
-            };
-            let fident = &f.ident;
+        let (args, instantiation_fields) = self.branches.iter().map(|b|{
+            let fident = &b.ident;
+            let fty = &b.ty;
             (quote!{
                 #fident: #fty
             },quote!{#fident})

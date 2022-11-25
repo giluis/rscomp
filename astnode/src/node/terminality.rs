@@ -11,7 +11,11 @@ impl  BranchTerminality  {
     pub fn as_conjunct_fn_call(&self)-> proc_macro2::TokenStream {
         match self {
             Self::StatefulLeaf { source} =>  
-                    quote! { expect(#source(Default::default())) } ,
+                    quote! { expect(#source(Default::default()))
+                             .map(|v| match v{
+                                #source(inner) => inner,
+                                _ => panic!("Inner error: expect should always return a token of the same variant as its input")
+                             }) } ,
             Self::StatelessLeaf  { source } =>  
                     quote! { expect(#source) },
             Self::Reference(inner_ty)  =>  
@@ -19,16 +23,23 @@ impl  BranchTerminality  {
         }
     }
 
-    pub fn as_disjunct_fn_call(&self)-> proc_macro2::TokenStream {
+    pub fn as_disjunct_fn_call(&self, node_name: &syn::Ident, branch_ident: &syn::Ident)-> proc_macro2::TokenStream {
         match self {
             Self::StatefulLeaf { source} =>  
-                    quote! { disjunct_expect(#source(Default::default())) } , // #node_name::#branch_ident()
+                    quote! { disjunct_expect(#source(Default::default()))
+                             .map::<#node_name>(|v| #node_name::#branch_ident(match v{
+                                #source(inner) => inner,
+                                _ => panic!("Inner error: expect should always return a token of the same variant as its input")
+                             }) ) } , // #node_name::#branch_ident()
             Self::StatelessLeaf  { source } =>  
-                    quote! { disjunct_expect(#source) },
+                    quote! { disjunct_expect(#source)
+                             .map::<#node_name>(|v| #node_name::#branch_ident(v)) },
             Self::Reference(inner_ty)  =>  
-                    quote! { disjunct_parse::<#inner_ty>() }  
+                    quote! { disjunct_parse::<#inner_ty>()
+                             .map::<#node_name>(|v| #node_name::#branch_ident(v)) }  
         }
     }
+
     
 }
 

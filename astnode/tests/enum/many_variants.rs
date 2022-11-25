@@ -56,7 +56,7 @@ fn main() {
         t!(,),
         t!(,),
         ].into_token_iter();
-    let result = iter.parse::<TestEnum>();
+    let result = TestEnum::parse(&mut iter);
     match result {
         Ok(TestEnum::DoubleComma(DoubleComma {
             comma1: Token::Comma,

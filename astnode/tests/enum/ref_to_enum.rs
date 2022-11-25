@@ -54,8 +54,8 @@ fn main() {
     let result = iter.parse::<Punct>();
     match result {
         Ok(Punct::EqualSign(Token::Assign)) => (),
-        Ok(_) => panic!("Expect DoubleComma variant, but didn't get that "), // internal error: token should always be t! (int) when result is OK
-        _ => panic!("Expecte Ok Result"),
+        Ok(_) => panic!("Expect Punct::EqualSign variant, but didn't get that "), // internal error: token should always be t! (int) when result is OK
+        _ => panic!("Expecte Ok(Punct::EqualSign(Token::Assign))(Punct::EqualSign(Token::Assign)) Result, but got error"),
     }
 
     let mut iter = vec![
@@ -65,7 +65,7 @@ fn main() {
     match result {
         Ok(Punct::SemiOrComma(SemiOrComma::Comma(Token::Comma))) => (),
         Ok(_) => panic!("Expect DoubleComma variant, but didn't get that "), // internal error: token should always be t! (int) when result is OK
-        _ => panic!("Expecte Ok Result"),
+        Err(msg) => panic!("Expecte Ok(Punct::SemiOrComma(SemiOrComma::Comma(Token::Comma))) Result, but got error: {}", msg),
     }
     // assert!(currentBefore + 1 == iter.current );
 
@@ -76,6 +76,6 @@ fn main() {
     match result {
         Ok(Punct::SemiOrComma(SemiOrComma::Semi(Token::SemiColon))) => (),
         Ok(_) => panic!("Expect Punct Punct::SemiOrComma(SemiOrComma::Semi(Token::SemiColon)) variant, but didn't get that "), // internal error: token should always be t! (int) when result is OK
-        _ => panic!("Expected Ok Result"),
+        _ => panic!("Expected Ok Result, but got error"),
     }
 }

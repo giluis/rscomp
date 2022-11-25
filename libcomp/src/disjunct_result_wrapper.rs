@@ -16,6 +16,7 @@ impl<T, E> FromResidual<DisjunctResultWrapper<T, E>> for Result<T, E> {
         }
     }
 }
+
 impl<T, E> Try for DisjunctResultWrapper<T, E> {
     type Output = E;
     type Residual = DisjunctResultWrapper<T,E>;
@@ -32,3 +33,14 @@ impl<T, E> Try for DisjunctResultWrapper<T, E> {
     }
 }
 
+
+
+
+impl<T, E> DisjunctResultWrapper<T, E> {
+    pub fn map<P>(self, construction_function: fn(T)-> P) -> DisjunctResultWrapper<P,E> {
+        match self.0 {
+            Ok(result) => DisjunctResultWrapper(Ok(construction_function(result))), 
+            Err(err) => DisjunctResultWrapper::<P,E>(Err(err))
+        }
+    }
+}
