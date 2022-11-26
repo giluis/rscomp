@@ -1,4 +1,4 @@
-pub fn ty_inner_type<'a>(wrapper: &str, ty: syn::Type) -> Option<syn::Type> {
+pub fn ty_inner_type(wrapper: &str, ty: syn::Type) -> Option<syn::Type> {
     if let syn::Type::Path(ref p) = ty {
         if p.path.segments.len() != 1 || p.path.segments[0].ident != wrapper {
             None
@@ -31,6 +31,6 @@ where
 {
     fn unzip_to_vec(self) -> (Vec<T>, Vec<P>) {
         let a: (Vec<_>, Vec<_>) = self.unzip();
-        return a;
+        a
     }
 }

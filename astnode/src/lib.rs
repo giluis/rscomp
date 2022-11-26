@@ -5,14 +5,14 @@
 // #![warn(missing_docs)]
 
 mod util;
-mod node;
+mod node_lib;
 
-use node::node::{Node, NodeType};
-use node::descriptor::Descriptor;
+use node_lib::node::{Node, NodeType};
+use node_lib::descriptor::Descriptor;
+use node_lib::branch::Branch;
 use syn::{parse_macro_input, DeriveInput};
 use libcomp::token::Token;
 use quote::*;
-use crate::node::branch::Branch;
 
 use util::{ty_inner_type, UnzippableToVec};
 

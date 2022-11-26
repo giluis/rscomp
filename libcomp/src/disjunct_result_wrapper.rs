@@ -4,7 +4,7 @@ pub struct DisjunctResultWrapper<T, E>(pub Result<T,E>);
 
 impl<T, E> FromResidual<DisjunctResultWrapper<T, E>> for DisjunctResultWrapper<T, E> {
     fn from_residual(residual: DisjunctResultWrapper<T, E>) -> Self {
-        return residual;
+        residual
     }
 }
 

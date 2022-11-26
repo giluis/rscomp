@@ -6,6 +6,8 @@ pub mod lexer;
 pub mod iter;
 pub mod collection_builder;
 pub mod parse;
+pub mod optional;
+pub mod vec;
 pub mod tests_common;
 pub mod disjunct_result_wrapper;
 pub mod tests_disjunct_result_wrapper;
