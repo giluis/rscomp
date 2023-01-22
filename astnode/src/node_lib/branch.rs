@@ -6,13 +6,6 @@ use proc_macro2::Span;
 use quote::*;
 use syn::spanned::Spanned;
 
-fn and() {}
-
-// pub struct InnerType(syn::Type);
-
-// impl From<syn::Type> for InnerType {
-//     fn from(ty: syn::Type) -> InnerType {}
-// }
 
 #[derive(Debug)]
 pub struct Branch {
@@ -46,13 +39,6 @@ impl From<&syn::Field> for Branch {
             ty: f.ty.clone(),
         }
     }
-}
-
-fn error<T>(e: &T, msg: &str) -> syn::Error
-where
-    T: Spanned,
-{
-    syn::Error::new(e.span(), msg)
 }
 
 trait LeafSourceExtractable {
